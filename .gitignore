@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# env
+.env
+
 # personal
 .claude
 docs/private

@@ -100,3 +100,15 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 | is_correct | BOOLEAN | |
 | answered_at | TIMESTAMP | |
 
+## 6. APIエンドポイント
+
+| メソッド | パス | 説明 |
+|---|---|---|
+| POST | `/documents` | PDFアップロード |
+| GET | `/documents` | 資料一覧 |
+| DELETE | `/documents/:id` | 資料削除 |
+| POST | `/questions/generate` | 問題生成（`document_id` を受け取り `questions` に保存） |
+| GET | `/questions` | 問題一覧（再出題用） |
+| GET | `/questions/:id` | 問題取得 |
+| POST | `/attempts` | 解答記録 |
+
