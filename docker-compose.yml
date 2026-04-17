@@ -20,6 +20,13 @@ services:
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       AWS_DEFAULT_REGION: ap-northeast-1
+      # ローカルでは false。AWS デプロイ時は true に変更して KB_ID / DATA_SOURCE_ID も設定する。
+      BEDROCK_KB_ENABLED: "false"
+      BEDROCK_KB_ID: ${BEDROCK_KB_ID:-}
+      BEDROCK_KB_DATA_SOURCE_ID: ${BEDROCK_KB_DATA_SOURCE_ID:-}
+      # ローカル開発用 Bedrock 認証情報。AWS デプロイ時は IAM タスクロールで解決されるため不要。
+      BEDROCK_AWS_ACCESS_KEY_ID: ${BEDROCK_AWS_ACCESS_KEY_ID:-}
+      BEDROCK_AWS_SECRET_ACCESS_KEY: ${BEDROCK_AWS_SECRET_ACCESS_KEY:-}
     depends_on:
       db:
         condition: service_healthy

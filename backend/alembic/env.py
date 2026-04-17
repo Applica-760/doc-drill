@@ -5,12 +5,12 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.core.config import settings
-from app.dependencies.user import MVP_USER_ID
 from app.models.base import Base
 
 # モデルをインポートしてBaseのmetadataに登録する
 import app.models.user  # noqa: F401
 import app.models.document  # noqa: F401
+import app.models.question  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
