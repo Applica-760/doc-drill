@@ -5,6 +5,9 @@ services:
     build:
       context: ./backend
       target: dev
+    command: >
+      sh -c "uv run alembic upgrade head &&
+             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv # コンテナ内の.venvをマウントで上書きされないよう保護
@@ -20,8 +23,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   # ── フロントエンド（Next.js）────────────────────────────────────────────
   frontend:
@@ -81,6 +84,9 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     entrypoint: >
       /bin/sh -c "
         mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
