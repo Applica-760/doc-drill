@@ -20,6 +20,7 @@ services:
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       AWS_DEFAULT_REGION: ap-northeast-1
+      TEST_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/doc_drill_test
       # ローカルでは false。AWS デプロイ時は true に変更して KB_ID / DATA_SOURCE_ID も設定する。
       BEDROCK_KB_ENABLED: "false"
       BEDROCK_KB_ID: ${BEDROCK_KB_ID:-}

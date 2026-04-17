@@ -1,7 +1,9 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
+
     database_url: str
     s3_endpoint_url: str
     s3_bucket: str
@@ -27,10 +29,6 @@ class Settings(BaseSettings):
     # AWS デプロイ時は IAM タスクロールで解決されるため、これらの設定は不要。
     bedrock_aws_access_key_id: str = ""
     bedrock_aws_secret_access_key: str = ""
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
 
 
 settings = Settings()
