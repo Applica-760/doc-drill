@@ -86,6 +86,24 @@
 
 ---
 
+## フロントエンドUIの役割分担: Mantine UI + Tailwind CSS
+
+**方針**
+- **UIコンポーネント（Mantine）**: Button, Card, Input, Modal, Stepper, Dropzone など、インタラクティブな要素はすべて Mantine のコンポーネントを使用する
+- **レイアウト・余白（Tailwind）**: ページ全体のグリッド、コンポーネント間のスペーシング、最大幅制限などのレイアウト調整には Tailwind ユーティリティクラスを使用する
+
+**境界の判断基準**
+> 「それは Mantine のコンポーネントで表現できるか？」→ Yes なら Mantine。No（ページ構造・配置・間隔）なら Tailwind。
+
+**理由**
+- Mantine コンポーネントに Tailwind のスタイルを混在させるとクラスの優先順位が競合しやすくなるため、責務を明確に分離することで保守性を高める
+
+**トレードオフ**
+- Tailwind 単体に比べてバンドルサイズが増加する
+- Mantine のテーマとTailwindの設定値（色・breakpoint等）の二重管理が生じる
+
+---
+
 ## ローカルDockerランタイム: OrbStack
 
 **理由**
@@ -95,3 +113,44 @@
 
 **トレードオフ**
 - チーム開発でDocker Desktopが標準の場合、個人環境の差異として認識・説明が必要になる場合がある
+
+---
+
+## API型定義の共有戦略: OpenAPI スキーマ → TypeScript 型自動生成
+
+**方針**
+- FastAPI が自動生成する `/openapi.json` を唯一の真実（Single Source of Truth）とする
+- `openapi-typescript` を使って TypeScript 型ファイル（`src/lib/api.gen.ts`）を生成する
+- `api.gen.ts` はコミット対象とし、手動編集禁止とする
+- バックエンドのスキーマ変更時は `npm run generate:api` を手動で実行してコミットに含める
+
+**理由**
+- フロントとバックで言語が異なる（TypeScript / Python）ため、型定義ファイルの直接共有はできない
+- FastAPI は Pydantic モデルから OpenAPI スキーマを自動生成するため、中間フォーマットとして活用できる
+- 手書きの型定義（`types.ts`）との二重管理を排除し、バック変更時のフロント反映漏れを防ぐ
+
+**自動実行ではなく手動実行を選んだ理由**
+- `api.gen.ts` をコミットに含めることで、FastAPI 未起動の環境でもフロントのビルドが通る
+- `dev` スクリプトに組み込むと FastAPI 起動が前提になり、フロント単独起動ができなくなる
+- 将来 CI で「`generate:api` 後に差分が出たらエラー」とするチェックを入れることで、忘れ防止を自動化できる
+
+**トレードオフ**
+- バックのスキーマ変更後に `npm run generate:api` を叩き忘れると不整合が生じる（CI チェックで補完予定）
+- FastAPI を起動した状態でないとスクリプトが実行できない
+
+---
+
+## バリデーション制約の二重管理（既知の不整合）
+
+**現状**
+- `openapi-typescript` は Pydantic の `Field(ge=1, le=20)` などのバリデーション制約を TypeScript 型に反映しない
+- そのため `DocumentSelect.tsx` に `QUESTION_COUNT_MIN=1`, `MAX=20`, `DEFAULT=5` をハードコードしており、`question.py` と手動で同期している
+
+**許容している理由**
+- 問題数の上限・下限はアプリの仕様として安定しており、頻繁に変わる値ではない
+- openapi-typescript の型生成で解決できる問題ではなく、別途ランタイムバリデーション（zod 等）を導入しないと根本解決にならない
+- MVPの範囲ではオーバーエンジニアリングと判断
+
+**将来の対応方針**
+- スキーマ変更時は `question.py` の `Field` 制約とフロントの定数を必ずセットで変更する
+- 本格的に解決する場合は `zod` + `openapi-zod-client` の導入を検討する

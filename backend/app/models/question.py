@@ -12,7 +12,7 @@ class Question(Base):
     __tablename__ = "questions"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), nullable=False)
+    document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     # 問題形式の識別子。現在は "short_answer" のみ。
     # 将来の拡張（択一式など）に備えて設計時から保持する。
     question_type: Mapped[str] = mapped_column(Text, nullable=False, default="short_answer")

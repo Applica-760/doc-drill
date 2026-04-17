@@ -47,8 +47,8 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 
 | フェーズ | 内容 | 状態 |
 |---|---|---|
-| Phase 1 | ローカル開発基盤（Docker Compose, モノレポ構成） | 進行中 |
-| Phase 2 | バックエンド実装（FastAPI, Bedrock 連携） | 未着手 |
+| Phase 1 | ローカル開発基盤（Docker Compose, モノレポ構成） | 完了 |
+| Phase 2 | バックエンド実装（FastAPI, Bedrock 連携） | 完了 |
 | Phase 3 | フロントエンド実装（Next.js） | 未着手 |
 | Phase 4 | AWSインフラ構築（Terraform） | 未着手 |
 | Phase 5 | デプロイ・CI/CD 整備（MVP 完成） | 未着手 |
@@ -56,7 +56,28 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 
 ## ローカル起動
 
-> Phase 1 完了後に追記予定
+```bash
+cp .env.example .env
+# .env に POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB / MINIO_ROOT_USER / MINIO_ROOT_PASSWORD を設定
+docker compose up --build
+```
+
+| サービス | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| MinIO Console | http://localhost:9001 |
+
+> Bedrock 連携はデフォルト無効（`BEDROCK_KB_ENABLED=false`）。AWS 環境へのデプロイ時は `.env` で有効化する。
+
+## ドキュメント
+
+| ドキュメント | 内容 |
+|---|---|
+| [プロジェクト構造](docs/structure.md) | ディレクトリ構成・作業別の参照先ガイド |
+| [技術選定](docs/adr.md) | ADR（技術選定の意思決定記録） |
+| [アーキテクチャ](docs/architecture.md) | AWS 詳細構成（Phase 4 で整備予定） |
+| [仕様](docs/spec.md) | アプリ仕様・APIエンドポイント一覧 |
 
 ## ライセンス
 

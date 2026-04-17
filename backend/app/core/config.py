@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
+    cors_origins: list[str] = ["http://localhost:3000"]
+
     database_url: str
     s3_endpoint_url: str
     s3_bucket: str
