@@ -13,6 +13,19 @@
 
 ---
 
+## NAT Gateway（VPCエンドポイントとのトレードオフ）
+
+**採用理由**
+- Private SubnetのECSがECR・Bedrock・Secrets Manager等へアクセスするための標準パターンとして採用
+- VPCエンドポイントより設定がシンプルで、必要なサービスが増えても追加設定不要
+
+**トレードオフ**
+- NAT Gatewayは$0.062/時間の固定課金（月~$45）が発生する
+- VPCエンドポイント（Interface型）に置き換えると特定サービスへの通信はNATを通さず直接解決できるが、サービスごとにエンドポイントを作成する必要がある
+- このプロジェクトで必要なInterface Endpoint（ECR×2・Bedrock・Secrets Manager・CloudWatch Logs）を2AZ分作ると月~$58となりNATより高コストになるため、常時稼働する大規模構成でない限りNATの方が合理的
+
+---
+
 ## Amazon Bedrock
 
 **理由**

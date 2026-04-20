@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Container, Title, Stepper, Button, Group } from "@mantine/core";
+import { Container, Stepper, Button, Group } from "@mantine/core";
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentSelect from "@/components/DocumentSelect";
 import type { Document } from "@/lib/api";
@@ -17,10 +17,6 @@ export default function Home() {
 
   return (
     <Container size="md" className="py-12">
-      <Title order={1} mb="xl">
-        Doc Drill
-      </Title>
-
       <Stepper active={active} onStepClick={setActive}>
         <Stepper.Step label="資料をアップロード" description="PDFを選択">
           <div className="mt-6">

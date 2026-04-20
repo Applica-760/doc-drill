@@ -7,14 +7,14 @@ Next.js 16 (App Router) + Mantine UI v9 + Tailwind CSS v4
 ```
 frontend/src/
 ├── app/
-│   ├── layout.tsx              ルートレイアウト（MantineProvider / ColorSchemeScript）
+│   ├── layout.tsx              ルートレイアウト（MantineProvider / ColorSchemeScript / 共通ヘッダー）
 │   ├── page.tsx                トップページ（Stepper オーケストレーター）
 │   ├── globals.css             グローバルスタイル（Mantine / Tailwind の @import）
 │   ├── quiz/
 │   │   └── [documentId]/
 │   │       └── page.tsx        問題表示・解答フロー（実装済み）
 │   └── review/
-│       └── page.tsx            問題一覧・再演習（Phase 3-3 で実装予定）
+│       └── page.tsx            問題一覧・再演習（ドキュメント別 Accordion）
 ├── components/
 │   ├── DocumentUpload.tsx      Dropzone によるPDFアップロード（Step 1）
 │   └── DocumentSelect.tsx      資料選択・削除・問題生成トリガー（Step 2）

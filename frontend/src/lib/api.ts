@@ -6,6 +6,8 @@ export type GenerateQuestionsRequest = components["schemas"]["GenerateQuestionsR
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+export const quizSessionKey = (documentId: string) => `quiz_${documentId}`;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const isFormData = init?.body instanceof FormData;
   const res = await fetch(`${BASE_URL}${path}`, {

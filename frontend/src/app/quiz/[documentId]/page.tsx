@@ -16,8 +16,8 @@ import {
   Divider,
   Loader,
 } from "@mantine/core";
-import { IconCheck, IconX, IconAlertCircle, IconHome } from "@tabler/icons-react";
-import { listQuestions } from "@/lib/api";
+import { IconCheck, IconX, IconAlertCircle, IconHome, IconList } from "@tabler/icons-react";
+import { listQuestions, quizSessionKey } from "@/lib/api";
 import type { Question } from "@/lib/api";
 
 type Result = "correct" | "incorrect" | null;
@@ -40,7 +40,7 @@ export default function QuizPage({ params }: Props) {
 
   useEffect(() => {
     async function load() {
-      const stored = sessionStorage.getItem(`quiz_${documentId}`);
+      const stored = sessionStorage.getItem(quizSessionKey(documentId));
       if (stored) {
         const qs: Question[] = JSON.parse(stored);
         setQuestions(qs);
@@ -159,6 +159,9 @@ export default function QuizPage({ params }: Props) {
           <Group justify="center">
             <Button leftSection={<IconHome size={16} />} variant="light" onClick={() => router.push("/")}>
               ホームに戻る
+            </Button>
+            <Button leftSection={<IconList size={16} />} variant="light" onClick={() => router.push("/review")}>
+              問題一覧へ
             </Button>
           </Group>
         </Stack>

@@ -3,7 +3,8 @@ import "@mantine/dropzone/styles.css";
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
+import Link from "next/link";
+import { ColorSchemeScript, MantineProvider, mantineHtmlProps, Container, Group, Anchor, Text } from "@mantine/core";
 
 export const metadata: Metadata = {
   title: "Doc Drill",
@@ -21,7 +22,26 @@ export default function RootLayout({
         <ColorSchemeScript />
       </head>
       <body>
-        <MantineProvider>{children}</MantineProvider>
+        <MantineProvider>
+          <header style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
+            <Container size="md" py="sm">
+              <Group justify="space-between">
+                <Anchor component={Link} href="/" fw={700} size="lg" c="inherit" underline="never">
+                  Doc Drill
+                </Anchor>
+                <Group gap="lg">
+                  <Anchor component={Link} href="/" size="sm" c="dimmed" underline="hover">
+                    新しい問題
+                  </Anchor>
+                  <Anchor component={Link} href="/review" size="sm" c="dimmed" underline="hover">
+                    問題一覧
+                  </Anchor>
+                </Group>
+              </Group>
+            </Container>
+          </header>
+          <main>{children}</main>
+        </MantineProvider>
       </body>
     </html>
   );

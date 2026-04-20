@@ -14,7 +14,7 @@ import {
   Stack,
 } from "@mantine/core";
 import { IconTrash, IconAlertCircle, IconArrowRight } from "@tabler/icons-react";
-import { listDocuments, deleteDocument, generateQuestions } from "@/lib/api";
+import { listDocuments, deleteDocument, generateQuestions, quizSessionKey } from "@/lib/api";
 import type { Document } from "@/lib/api";
 
 const QUESTION_COUNT_MIN = 1;
@@ -81,7 +81,7 @@ export default function DocumentSelect({ newDocument }: Props) {
     setGenerateError(null);
     try {
       const questions = await generateQuestions(selectedId, count);
-      sessionStorage.setItem(`quiz_${selectedId}`, JSON.stringify(questions));
+      sessionStorage.setItem(quizSessionKey(selectedId), JSON.stringify(questions));
       router.push(`/quiz/${selectedId}`);
     } catch (e) {
       setGenerateError(e instanceof Error ? e.message : "問題生成に失敗しました");
