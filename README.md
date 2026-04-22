@@ -49,10 +49,11 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 |---|---|---|
 | Phase 1 | ローカル開発基盤（Docker Compose, モノレポ構成） | 完了 |
 | Phase 2 | バックエンド実装（FastAPI, Bedrock 連携） | 完了 |
-| Phase 3 | フロントエンド実装（Next.js） | 未着手 |
-| Phase 4 | AWSインフラ構築（Terraform） | 未着手 |
-| Phase 5 | デプロイ・CI/CD 整備（MVP 完成） | 未着手 |
-| Phase 6 | 自作 RAG パイプラインへの置き換え（pgvector） | 未着手 |
+| Phase 3 | フロントエンド実装（Next.js） | 完了 |
+| Phase 4 | AWSインフラ構築（Terraform） | 完了 |
+| Phase 5 | デプロイ・結合確認（ECR push → terraform apply → ALB で動作確認） | 未着手 |
+| Phase 6 | 自作 RAG パイプラインへの置き換え（Bedrock KB 廃止・pgvector 化） | 未着手 |
+| Phase 7 | CI/CD パイプラインの整備（GitHub Actions + ECS 自動デプロイ） | 未着手 |
 
 ## ローカル起動
 
