@@ -12,6 +12,9 @@ wheels/
 # env
 .env
 
+# macOS
+.DS_Store
+
 # personal
 .claude
 docs/private
