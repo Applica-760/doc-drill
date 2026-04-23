@@ -5,9 +5,9 @@ from app.core.config import settings
 
 _s3 = boto3.client(
     "s3",
-    endpoint_url=settings.s3_endpoint_url,
-    aws_access_key_id=settings.aws_access_key_id,
-    aws_secret_access_key=settings.aws_secret_access_key,
+    endpoint_url=settings.s3_endpoint_url or None,
+    aws_access_key_id=settings.aws_access_key_id or None,
+    aws_secret_access_key=settings.aws_secret_access_key or None,
     region_name=settings.aws_default_region,
 )
 

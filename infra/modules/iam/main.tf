@@ -97,10 +97,12 @@ resource "aws_iam_role_policy" "backend_bedrock_invoke" {
       Effect = "Allow"
       Action = "bedrock:InvokeModel"
       Resource = [
-        # foundation model 直接呼び出し
+        # foundation model 直接呼び出し（東京）
         "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-*",
-        # jp.* クロスリージョン推論プロファイル
+        # jp.* クロスリージョン推論プロファイル（東京）
         "arn:aws:bedrock:${var.aws_region}:${local.account_id}:inference-profile/jp.anthropic.claude-*",
+        # jp.* プロファイルが実際にルーティングする大阪リージョンの foundation model
+        "arn:aws:bedrock:ap-northeast-3::foundation-model/anthropic.claude-*",
       ]
     }]
   })
@@ -118,14 +120,14 @@ resource "aws_iam_role_policy" "backend_bedrock_kb" {
       {
         Effect = "Allow"
         Action = [
-          "bedrock-agent:StartIngestionJob",
-          "bedrock-agent:GetIngestionJob",
+          "bedrock:StartIngestionJob",
+          "bedrock:GetIngestionJob",
         ]
         Resource = "arn:aws:bedrock:${var.aws_region}:${local.account_id}:knowledge-base/*"
       },
       {
         Effect   = "Allow"
-        Action   = "bedrock-agent-runtime:Retrieve"
+        Action   = "bedrock:Retrieve"
         Resource = "arn:aws:bedrock:${var.aws_region}:${local.account_id}:knowledge-base/*"
       },
     ]

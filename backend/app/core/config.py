@@ -7,10 +7,10 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
 
     database_url: str
-    s3_endpoint_url: str
+    s3_endpoint_url: str = ""
     s3_bucket: str
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
     aws_default_region: str = "ap-northeast-1"
 
     # Bedrock Knowledge Bases

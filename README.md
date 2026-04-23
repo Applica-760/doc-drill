@@ -11,37 +11,34 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 - PDF ドキュメントのアップロード・管理
 - Bedrock (Claude) による問題・解説の自動生成
 - 生成した問題の保存と再演習
-- 学習履歴・理解度の管理
+
+## デモ
+
+> APIコスト削減のため、本番環境は常時稼働していません。以下のスクリーンショットで動作イメージをご確認ください。
+
+<div align="center">
+  <img src="docs/assets/upload.png" width="25%" alt="ファイルアップロード画面">
+  <img src="docs/assets/answer.png" width="25%" alt="出題画面">
+  <img src="docs/assets/result.png" width="25%" alt="スコア表示画面">
+</div>
+
 
 ## 技術スタック
 
 | レイヤー | 技術 |
 |---|---|
-| Frontend | Next.js (TypeScript) |
+| Frontend | Next.js (TypeScript) + Mantine UI |
 | Backend | FastAPI (Python) |
-| Database | Aurora Serverless v2 (PostgreSQL) + pgvector |
+| Database | RDS PostgreSQL 16 |
 | Storage | Amazon S3 |
-| AI / RAG | Amazon Bedrock (Claude, Embeddings, Knowledge Bases) |
+| AI / RAG | Amazon Bedrock (Claude) + Knowledge Bases（Phase 6 で pgvector に移行予定） |
 | Infra | AWS ECS Fargate, VPC, ALB, IAM |
 | IaC | Terraform |
-| Dev | Docker, Docker Compose, GitHub Actions |
+| Dev | Docker, Docker Compose |
 
 ## アーキテクチャ概要
 
-```
-[Browser]
-    │
-    ▼
-[Next.js on ECS Fargate]
-    │
-    ▼
-[FastAPI on ECS Fargate]  ──→  [Amazon S3]
-    │                              │
-    ├──→ [Aurora Serverless]       │
-    │      (pgvector)              │
-    │                              ▼
-    └──→ [Amazon Bedrock] ←── [Knowledge Bases]
-```
+![アーキテクチャ図](docs/assets/architecture.svg)
 
 ## 実装ロードマップ
 
@@ -51,7 +48,7 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 | Phase 2 | バックエンド実装（FastAPI, Bedrock 連携） | 完了 |
 | Phase 3 | フロントエンド実装（Next.js） | 完了 |
 | Phase 4 | AWSインフラ構築（Terraform） | 完了 |
-| Phase 5 | デプロイ・結合確認（ECR push → terraform apply → ALB で動作確認） | 未着手 |
+| Phase 5 | デプロイ・結合確認（ECR push → terraform apply → E2E 動作確認） | 完了 |
 | Phase 6 | 自作 RAG パイプラインへの置き換え（Bedrock KB 廃止・pgvector 化） | 未着手 |
 | Phase 7 | CI/CD パイプラインの整備（GitHub Actions + ECS 自動デプロイ） | 未着手 |
 

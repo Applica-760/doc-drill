@@ -4,90 +4,41 @@ OpenSearch Serverless にベクターインデックスを作成する。
 Bedrock Knowledge Bases はインデックスが事前に存在することを要求するため、
 terraform apply 中の null_resource から呼び出される。
 
-依存: boto3（標準の Python 環境に含まれる想定）
+依存: boto3（botocore.auth.SigV4Auth で署名）
 環境変数: AOSS_ENDPOINT, AWS_REGION, INDEX_NAME
 """
 
 import hashlib
-import hmac
+import http.client
 import json
 import os
 import sys
-import urllib.error
-import urllib.request
-from datetime import datetime, timezone
-from urllib.parse import urlparse
+import urllib.parse
 
 import boto3
-
-
-def _sign(key: bytes, msg: str) -> bytes:
-    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
-
-
-def _signing_key(secret_key: str, date_stamp: str, region: str, service: str) -> bytes:
-    k = _sign(("AWS4" + secret_key).encode("utf-8"), date_stamp)
-    k = _sign(k, region)
-    k = _sign(k, service)
-    return _sign(k, "aws4_request")
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 
 
 def _signed_request(
     method: str,
     url: str,
     region: str,
-    body: str,
+    body: bytes,
     credentials,
-) -> urllib.request.Request:
-    parsed      = urlparse(url)
-    host        = parsed.netloc
-    uri         = parsed.path or "/"
-    service     = "aoss"
-    payload_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
-
-    now        = datetime.now(timezone.utc)
-    amz_date   = now.strftime("%Y%m%dT%H%M%SZ")
-    date_stamp = now.strftime("%Y%m%d")
-
-    headers = {
-        "content-type": "application/json",
-        "host":         host,
-        "x-amz-date":  amz_date,
-    }
-    if credentials.token:
-        headers["x-amz-security-token"] = credentials.token
-
-    signed_headers    = ";".join(sorted(headers.keys()))
-    canonical_headers = "".join(f"{k}:{v}\n" for k, v in sorted(headers.items()))
-
-    canonical_request = "\n".join([
-        method, uri, "",
-        canonical_headers, signed_headers, payload_hash,
-    ])
-
-    credential_scope = f"{date_stamp}/{region}/{service}/aws4_request"
-    string_to_sign   = "\n".join([
-        "AWS4-HMAC-SHA256", amz_date, credential_scope,
-        hashlib.sha256(canonical_request.encode("utf-8")).hexdigest(),
-    ])
-
-    sig = hmac.new(
-        _signing_key(credentials.secret_key, date_stamp, region, service),
-        string_to_sign.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-    auth = (
-        f"AWS4-HMAC-SHA256 Credential={credentials.access_key}/{credential_scope}, "
-        f"SignedHeaders={signed_headers}, Signature={sig}"
+) -> tuple[dict, bytes]:
+    sha256 = hashlib.sha256(body).hexdigest()
+    aws_req = AWSRequest(
+        method=method,
+        url=url,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "x-amz-content-sha256": sha256,
+        },
     )
-
-    req_headers = {k: v for k, v in headers.items() if k != "host"}
-    req_headers["Authorization"] = auth
-
-    return urllib.request.Request(
-        url, data=body.encode("utf-8"), headers=req_headers, method=method
-    )
+    SigV4Auth(credentials, "aoss", region).add_auth(aws_req)
+    return dict(aws_req.headers), body
 
 
 def main() -> None:
@@ -98,7 +49,7 @@ def main() -> None:
     if not endpoint.startswith("https://"):
         endpoint = "https://" + endpoint
 
-    credentials = boto3.Session().get_credentials().get_frozen_credentials()
+    credentials = boto3.Session().get_credentials()
 
     index_body = {
         "settings": {
@@ -126,19 +77,22 @@ def main() -> None:
     }
 
     url     = f"{endpoint}/{index_name}"
-    payload = json.dumps(index_body)
-    req     = _signed_request("PUT", url, region, payload, credentials)
+    payload = json.dumps(index_body).encode("utf-8")
+    headers, body = _signed_request("PUT", url, region, payload, credentials)
 
-    try:
-        with urllib.request.urlopen(req) as resp:
-            print(f"Index created: {resp.status} {resp.read().decode()}")
-    except urllib.error.HTTPError as e:
-        body_text = e.read().decode()
-        if "resource_already_exists_exception" in body_text.lower():
-            print("Index already exists, skipping")
-        else:
-            print(f"Failed to create index: {e.code} {body_text}", file=sys.stderr)
-            sys.exit(1)
+    parsed = urllib.parse.urlparse(url)
+    conn   = http.client.HTTPSConnection(parsed.netloc)
+    conn.request("PUT", parsed.path, body=body, headers=headers)
+    resp      = conn.getresponse()
+    resp_body = resp.read().decode()
+
+    if resp.status in (200, 201):
+        print(f"Index created: {resp.status} {resp_body}")
+    elif "resource_already_exists_exception" in resp_body.lower():
+        print("Index already exists, skipping")
+    else:
+        print(f"Failed to create index: {resp.status} {resp_body}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

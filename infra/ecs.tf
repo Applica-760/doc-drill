@@ -48,6 +48,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "BEDROCK_KB_ENABLED",        value = "true" },
       { name = "BEDROCK_KB_ID",             value = module.bedrock.knowledge_base_id },
       { name = "BEDROCK_KB_DATA_SOURCE_ID", value = module.bedrock.data_source_id },
+      { name = "CORS_ORIGINS",              value = "[\"http://${module.alb_frontend.dns_name}\"]" },
     ]
     logConfiguration = {
       logDriver = "awslogs"

@@ -7,6 +7,25 @@ from app.services.bedrock import make_bedrock_client
 
 logger = logging.getLogger(__name__)
 
+INGESTION_COMPLETE = "COMPLETE"
+
+
+def get_ingestion_status(job_id: str) -> str:
+    """インジェスションジョブのステータスを返す。
+
+    Returns: STARTING | IN_PROGRESS | COMPLETE | FAILED | NOT_FOUND
+    """
+    try:
+        response = make_bedrock_client("bedrock-agent").get_ingestion_job(
+            knowledgeBaseId=settings.bedrock_kb_id,
+            dataSourceId=settings.bedrock_kb_data_source_id,
+            ingestionJobId=job_id,
+        )
+        return response["ingestionJob"]["status"]
+    except ClientError as e:
+        logger.warning("get_ingestion_job failed: %s", e.response["Error"]["Message"])
+        return "NOT_FOUND"
+
 
 def ingest_document(s3_key: str) -> str | None:
     """S3 上のドキュメントを Bedrock Knowledge Base に登録する。

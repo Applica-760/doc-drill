@@ -9,7 +9,8 @@ from app.models.document import Document
 from app.models.question import Question
 from app.models.user import User
 from app.schemas.question import GenerateQuestionsRequest, QuestionResponse
-from app.services import bedrock
+from app.services import bedrock, knowledge_base
+from app.core.config import settings
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
@@ -27,6 +28,14 @@ def generate_questions(
     )
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
+
+    if settings.bedrock_kb_enabled and document.kb_document_id:
+        status = knowledge_base.get_ingestion_status(document.kb_document_id)
+        if status != knowledge_base.INGESTION_COMPLETE:
+            raise HTTPException(
+                status_code=409,
+                detail=f"資料のインデックス化が完了していません（状態: {status}）。1〜2分後に再試行してください。",
+            )
 
     try:
         raw_questions = bedrock.generate_questions(document, req.count)

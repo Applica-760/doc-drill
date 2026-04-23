@@ -17,6 +17,7 @@ module "alb_frontend" {
       port                 = 3000
       target_type          = "ip"
       deregistration_delay = 30
+      create_attachment    = false
       health_check = {
         path                = "/"
         healthy_threshold   = 2
@@ -55,6 +56,7 @@ module "alb_backend" {
       port                 = 8000
       target_type          = "ip"
       deregistration_delay = 30
+      create_attachment    = false
       health_check = {
         path                = "/health"
         healthy_threshold   = 2
