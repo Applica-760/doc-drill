@@ -74,7 +74,7 @@ docker compose up --build
 |---|---|
 | [プロジェクト構造](docs/structure.md) | ディレクトリ構成・作業別の参照先ガイド |
 | [技術選定](docs/adr.md) | ADR（技術選定の意思決定記録） |
-| [アーキテクチャ](docs/architecture.md) | AWS 詳細構成（Phase 4 で整備予定） |
+| [アーキテクチャ](docs/architecture.md) | AWS 詳細構成 |
 | [仕様](docs/spec.md) | アプリ仕様・APIエンドポイント一覧 |
 
 ## ライセンス

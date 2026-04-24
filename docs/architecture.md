@@ -1,8 +1,5 @@
 # アーキテクチャ設計
 
-> コンポーネント構成の概要は [spec.md](spec.md) の「4. アーキテクチャ構成」を参照。
-> このドキュメントでは **Phase 4（AWSインフラ構築）** で必要な「どう作るか」レベルの設計を記録する。
-
 ---
 
 ## 全体構成図
@@ -40,7 +37,7 @@ Internet
 | 名前 | CIDR | AZ | 用途 |
 |---|---|---|---|
 | public-a | 10.0.0.0/24 | 1a | ALB、NAT Gateway |
-| public-c | 10.0.1.0/24 | 1c | ALB、NAT Gateway |
+| public-c | 10.0.1.0/24 | 1c | ALB |
 | private-a | 10.0.10.0/24 | 1a | ECS タスク（frontend / backend） |
 | private-c | 10.0.11.0/24 | 1c | ECS タスク（frontend / backend） |
 | db-a | 10.0.20.0/24 | 1a | RDS PostgreSQL 16 |
@@ -134,6 +131,7 @@ Internet
 | `BEDROCK_KB_ENABLED` | `true` | |
 | `BEDROCK_KB_ID` | Terraform output | |
 | `BEDROCK_KB_DATA_SOURCE_ID` | Terraform output | |
+| `CORS_ORIGINS` | `["http://{frontend-alb-dns}"]` | フロントALBのDNSをTerraformで注入 |
 
 **設定しない変数（ローカルとの差分）:**
 
@@ -165,7 +163,7 @@ FastAPIコンテナ自身がAWSサービスを呼び出すための権限。
 | アクション | リソース | 用途 |
 |---|---|---|
 | `s3:GetObject` `s3:PutObject` `s3:DeleteObject` `s3:ListBucket` | doc-drillバケット | PDF保存・取得・削除 |
-| `bedrock:InvokeModel` | claude モデルARN | 問題生成 |
+| `bedrock:InvokeModel` | 東京リージョンの foundation model ARN・jp.* クロスリージョン推論プロファイル・大阪リージョンの foundation model ARN | 問題生成 |
 | `bedrock:StartIngestionJob` `bedrock:GetIngestionJob` | Knowledge Base ARN | PDF登録 |
 | `bedrock:Retrieve` | Knowledge Base ARN | 類似チャンク検索 |
 
@@ -264,27 +262,6 @@ terraform {
 
 ---
 
-## Terraform ディレクトリ構成
-
-```
-infra/
-├── versions.tf       # terraform / provider バージョン固定
-├── main.tf           # 各モジュールの呼び出し
-├── variables.tf      # 入力変数定義
-├── outputs.tf        # KB IDなど後続で必要な値を出力
-├── terraform.tfvars  # 実際の値（.gitignore 対象）
-├── backend.tf        # S3バックエンド宣言（値は backend.hcl に分離）
-├── networking.tf     # VPC, サブネット, IGW, NAT GW, ルートテーブル, SG（terraform-aws-modules/vpc）
-├── database.tf       # RDS PostgreSQL 16, Secrets Manager（terraform-aws-modules/rds）
-├── storage.tf        # S3バケット
-├── alb.tf            # ALB 2つ, ターゲットグループ, リスナー（terraform-aws-modules/alb）
-├── ecs.tf            # クラスター, タスク定義, サービス（terraform-aws-modules/ecs）
-└── modules/
-    ├── iam/          # Task Execution Role, Backend Task Role（カスタム）
-    └── bedrock/      # Knowledge Base, データソース（カスタム）
-```
-
----
 
 ## ローカル vs AWS 環境差分サマリ
 

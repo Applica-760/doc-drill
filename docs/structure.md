@@ -19,13 +19,10 @@
 | DB マイグレーション | `backend/alembic/versions/` |
 | 環境変数定義 | `backend/app/core/config.py` |
 
-## 作業前に読むドキュメント
+## レイヤー別詳細
 
-| 作業 | 参照先 |
+| レイヤー | 参照先 |
 |------|-------|
-| backend を修正・追加する | [backend 構造詳細](structure-backend.md) |
-| frontend を修正・追加する | [frontend 構造詳細](structure-frontend.md) |
-| infra を修正・追加する | [infra 構造詳細](structure-infra.md) |
-| AWS 構成を検討・変更する | [アーキテクチャ](architecture.md) |
-| 技術選定の経緯を確認する | [技術選定](adr.md) |
-| API 仕様を確認する | [仕様](spec.md) |
+| backend | [backend 構造詳細](structure-backend.md) |
+| frontend | [frontend 構造詳細](structure-frontend.md) |
+| infra | [infra 構造詳細](structure-infra.md) |
