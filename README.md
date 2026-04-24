@@ -17,9 +17,9 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 > APIコスト削減のため、本番環境は常時稼働していません。以下のスクリーンショットで動作イメージをご確認ください。
 
 <div align="center">
-  <img src="docs/assets/upload.png" width="25%" alt="ファイルアップロード画面">
-  <img src="docs/assets/answer.png" width="25%" alt="出題画面">
-  <img src="docs/assets/result.png" width="25%" alt="スコア表示画面">
+  <img src="docs/assets/upload.png" width="30%" alt="ファイルアップロード画面">
+  <img src="docs/assets/answer.png" width="30%" alt="出題画面">
+  <img src="docs/assets/result.png" width="30%" alt="スコア表示画面">
 </div>
 
 

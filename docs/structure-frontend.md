@@ -16,6 +16,7 @@ frontend/src/
 │   └── review/
 │       └── page.tsx            問題一覧・再演習（ドキュメント別 Accordion）
 ├── components/
+│   ├── Header.tsx              グローバルヘッダー（layout.tsx から使用）
 │   ├── DocumentUpload.tsx      Dropzone によるPDFアップロード（Step 1）
 │   └── DocumentSelect.tsx      資料選択・削除・問題生成トリガー（Step 2）
 └── lib/

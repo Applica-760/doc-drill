@@ -15,9 +15,9 @@ Internet
   └──[Backend  ALB (Public, :80)]──→ [ECS: FastAPI  (:8000)]
                                               │
                                ┌──────────────┴──────────────┐
-                    [Aurora Serverless v2]         [Amazon Bedrock]
-                    (PostgreSQL 16互換)            ├── Knowledge Bases
-                    (DB Subnetに隔離)              └── Claude (invoke_model)
+                    [RDS PostgreSQL 16]            [Amazon Bedrock]
+                    (DB Subnetに隔離)              ├── Knowledge Bases
+                                                   └── Claude (invoke_model)
                                                           ↑
                                                        [S3]
                                                   (PDF保存 / KBデータソース)
@@ -43,8 +43,8 @@ Internet
 | public-c | 10.0.1.0/24 | 1c | ALB、NAT Gateway |
 | private-a | 10.0.10.0/24 | 1a | ECS タスク（frontend / backend） |
 | private-c | 10.0.11.0/24 | 1c | ECS タスク（frontend / backend） |
-| db-a | 10.0.20.0/24 | 1a | Aurora Serverless v2 |
-| db-c | 10.0.21.0/24 | 1c | Aurora Serverless v2 |
+| db-a | 10.0.20.0/24 | 1a | RDS PostgreSQL 16 |
+| db-c | 10.0.21.0/24 | 1c | RDS PostgreSQL 16 |
 
 ### ルーティング
 
@@ -62,7 +62,7 @@ Internet
 | backend-alb-sg | 0.0.0.0/0 → :80 | バックエンド用ALB |
 | frontend-ecs-sg | frontend-alb-sg → :3000 | Next.js ECSタスク |
 | backend-ecs-sg | backend-alb-sg → :8000 | FastAPI ECSタスク |
-| db-sg | backend-ecs-sg → :5432 | Aurora |
+| db-sg | backend-ecs-sg → :5432 | RDS |
 
 ---
 
@@ -166,8 +166,8 @@ FastAPIコンテナ自身がAWSサービスを呼び出すための権限。
 |---|---|---|
 | `s3:GetObject` `s3:PutObject` `s3:DeleteObject` `s3:ListBucket` | doc-drillバケット | PDF保存・取得・削除 |
 | `bedrock:InvokeModel` | claude モデルARN | 問題生成 |
-| `bedrock-agent:StartIngestionJob` `bedrock-agent:GetIngestionJob` | Knowledge Base ARN | PDF登録 |
-| `bedrock-agent-runtime:Retrieve` | Knowledge Base ARN | 類似チャンク検索 |
+| `bedrock:StartIngestionJob` `bedrock:GetIngestionJob` | Knowledge Base ARN | PDF登録 |
+| `bedrock:Retrieve` | Knowledge Base ARN | 類似チャンク検索 |
 
 ### フロントエンド タスクロール
 
@@ -185,14 +185,14 @@ Next.jsはバックエンドをHTTPで呼ぶだけのためAWSサービス呼び
 
 ---
 
-## Aurora Serverless v2 設計
+## RDS 設計
 
 | 項目 | 値 |
 |---|---|
-| エンジン | aurora-postgresql |
-| バージョン | PostgreSQL 16互換 |
-| 最小ACU | 0.5 |
-| 最大ACU | 4 |
+| エンジン | postgres |
+| バージョン | 16.6 |
+| インスタンスクラス | db.t3.micro |
+| ストレージ | 20GB (gp2) |
 | サブネットグループ | db-a / db-c |
 | セキュリティグループ | db-sg |
 | マスターパスワード | Secrets Manager で管理 |
@@ -210,7 +210,7 @@ Next.jsはバックエンドをHTTPで呼ぶだけのためAWSサービス呼び
 | データソース | S3バケット（`documents/` プレフィックス） |
 | チャンク戦略 | デフォルト（Bedrockに委譲） |
 
-> Phase 6でKnowledge Basesを切り離し、pgvector（Aurora）を使った自作パイプラインに置き換える。
+> Phase 6でKnowledge Basesを切り離し、pgvector（RDS）を使った自作パイプラインに置き換える。
 
 ---
 
@@ -268,24 +268,21 @@ terraform {
 
 ```
 infra/
-├── versions.tf            # terraform / provider バージョン固定
-├── main.tf                # 各モジュールの呼び出し
-├── variables.tf           # 入力変数定義
-├── outputs.tf             # KB IDなど後続で必要な値を出力
-├── terraform.tfvars       # 実際の値（.gitignore 対象）
+├── versions.tf       # terraform / provider バージョン固定
+├── main.tf           # 各モジュールの呼び出し
+├── variables.tf      # 入力変数定義
+├── outputs.tf        # KB IDなど後続で必要な値を出力
+├── terraform.tfvars  # 実際の値（.gitignore 対象）
+├── backend.tf        # S3バックエンド宣言（値は backend.hcl に分離）
+├── networking.tf     # VPC, サブネット, IGW, NAT GW, ルートテーブル, SG（terraform-aws-modules/vpc）
+├── database.tf       # RDS PostgreSQL 16, Secrets Manager（terraform-aws-modules/rds）
+├── storage.tf        # S3バケット
+├── alb.tf            # ALB 2つ, ターゲットグループ, リスナー（terraform-aws-modules/alb）
+├── ecs.tf            # クラスター, タスク定義, サービス（terraform-aws-modules/ecs）
 └── modules/
-    ├── networking/        # VPC, サブネット, IGW, NAT GW, ルートテーブル, SG
-    ├── ecr/               # ECRリポジトリ 2つ
-    ├── iam/               # Task Execution Role, Backend Task Role
-    ├── s3/                # S3バケット, バケットポリシー
-    ├── aurora/            # Aurora Serverless v2, Secrets Manager
-    ├── alb/               # ALB 2つ, ターゲットグループ, リスナー
-    ├── ecs/               # クラスター, タスク定義, サービス
-    └── bedrock/           # Knowledge Base, データソース
+    ├── iam/          # Task Execution Role, Backend Task Role（カスタム）
+    └── bedrock/      # Knowledge Base, データソース（カスタム）
 ```
-
-> Phase 4 Step 9で `terraform-aws-modules` を活用したリファクタリングを行う。
-> 初期実装はrawリソースで書き、構造を理解してからモジュール化する。
 
 ---
 
@@ -294,7 +291,7 @@ infra/
 | コンポーネント | ローカル | AWS |
 |---|---|---|
 | オブジェクトストレージ | MinIO（Docker） | Amazon S3 |
-| DB | PostgreSQL 16（Docker） | Aurora Serverless v2 |
+| DB | PostgreSQL 16（Docker） | RDS PostgreSQL 16（db.t3.micro） |
 | AWS認証 | 環境変数（access key） | IAMタスクロール |
 | Bedrock KB | 無効（`BEDROCK_KB_ENABLED=false`） | 有効 |
 | バックエンドURL | `http://localhost:8000` | `http://{backend-alb-dns}` |

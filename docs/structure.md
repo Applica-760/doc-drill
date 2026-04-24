@@ -6,7 +6,7 @@
 |------|------|
 | `backend/` | FastAPI アプリ・Alembic マイグレーション |
 | `frontend/` | Next.js アプリ（アップロード・問題生成・クイズフロー実装済み） |
-| `infra/` | Terraform（未着手） |
+| `infra/` | Terraform（VPC・RDS・ECS・Bedrock 等、実装済み） |
 | `docs/` | 設計・仕様ドキュメント |
 | `docker-compose.yml` | ローカル開発用コンテナ定義（backend/frontend/db/minio） |
 

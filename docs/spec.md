@@ -46,7 +46,7 @@
         ↓ ALB
 [FastAPI (ECS Fargate)]
    ↓            ↓
-[Aurora/RDS]  [Bedrock Knowledge Bases]  ※1
+[RDS PostgreSQL 16]  [Bedrock Knowledge Bases]  ※1
                     ↓
                  [S3: PDF保存]
 
@@ -85,12 +85,14 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 |---|---|---|
 | id | UUID PK | |
 | document_id | UUID FK → documents | 出典資料（userはdocument経由で導出） |
+| question_type | TEXT | 問題形式（現在は `short_answer` のみ） |
 | body | TEXT | 問題文 |
 | answer | TEXT | 正解 |
 | explanation | TEXT | 解説 |
+| options | JSONB nullable | 形式固有データ（short_answer では null） |
 | created_at | TIMESTAMP | |
 
-### `attempts` — 解答履歴
+### `attempts` — 解答履歴（未実装 / 拡張フェーズ）
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | UUID PK | |
@@ -110,5 +112,5 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 | POST | `/questions/generate` | 問題生成（`document_id` を受け取り `questions` に保存） |
 | GET | `/questions` | 問題一覧（再出題用） |
 | GET | `/questions/:id` | 問題取得 |
-| POST | `/attempts` | 解答記録 |
+| POST | `/attempts` | 解答記録（未実装 / 拡張フェーズ） |
 
