@@ -22,6 +22,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/local": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Local Document */
+        post: operations["create_local_document_documents_local_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{document_id}/questions/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Questions */
+        post: operations["import_questions_documents__document_id__questions_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{document_id}": {
         parameters: {
             query?: never;
@@ -116,6 +150,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** CreateLocalDocumentRequest */
+        CreateLocalDocumentRequest: {
+            /** Name */
+            name: string;
+        };
         /** DocumentResponse */
         DocumentResponse: {
             /**
@@ -130,8 +169,10 @@ export interface components {
             user_id: string;
             /** File Name */
             file_name: string;
+            /** Source Type */
+            source_type: string;
             /** S3 Key */
-            s3_key: string;
+            s3_key: string | null;
             /** Kb Document Id */
             kb_document_id: string | null;
             /**
@@ -187,6 +228,25 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /**
+         * ShortAnswerQuestion
+         * @description 短答式問題。MVPで実装する唯一の形式。
+         */
+        ShortAnswerQuestion: {
+            /**
+             * Question Type
+             * @constant
+             */
+            question_type: "short_answer";
+            /** Body */
+            body: string;
+            /** Answer */
+            answer: string;
+            /** Explanation */
+            explanation: string;
+            /** Options */
+            options?: null;
         };
         /** ValidationError */
         ValidationError: {
@@ -250,6 +310,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_local_document_documents_local_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLocalDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_questions_documents__document_id__questions_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShortAnswerQuestion"][];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionResponse"][];
                 };
             };
             /** @description Validation Error */

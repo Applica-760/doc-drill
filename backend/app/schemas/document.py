@@ -4,11 +4,16 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class CreateLocalDocumentRequest(BaseModel):
+    name: str
+
+
 class DocumentResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     file_name: str
-    s3_key: str
+    source_type: str
+    s3_key: str | None
     kb_document_id: str | None
     created_at: datetime
 

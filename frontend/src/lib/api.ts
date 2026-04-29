@@ -3,6 +3,8 @@ import type { components } from "./api.gen";
 export type Document = components["schemas"]["DocumentResponse"];
 export type Question = components["schemas"]["QuestionResponse"];
 export type GenerateQuestionsRequest = components["schemas"]["GenerateQuestionsRequest"];
+export type CreateLocalDocumentRequest = components["schemas"]["CreateLocalDocumentRequest"];
+export type QuestionImportItem = components["schemas"]["ShortAnswerQuestion"];
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -39,6 +41,23 @@ export function listDocuments(): Promise<Document[]> {
 
 export function deleteDocument(id: string): Promise<void> {
   return request<void>(`/documents/${id}`, { method: "DELETE" });
+}
+
+export function createLocalDocument(name: string): Promise<Document> {
+  return request<Document>("/documents/local", {
+    method: "POST",
+    body: JSON.stringify({ name } satisfies CreateLocalDocumentRequest),
+  });
+}
+
+export function importQuestions(
+  documentId: string,
+  items: QuestionImportItem[]
+): Promise<Question[]> {
+  return request<Question[]>(`/documents/${documentId}/questions/import`, {
+    method: "POST",
+    body: JSON.stringify(items),
+  });
 }
 
 // ── Questions ────────────────────────────────────────────────────────────────

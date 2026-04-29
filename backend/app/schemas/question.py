@@ -37,6 +37,9 @@ QuestionDetail = Annotated[
     Field(discriminator="question_type"),
 ]
 
+# インポートエンドポイントで受け取る1問分のスキーマ（現時点では ShortAnswerQuestion と同一）
+QuestionImportItem = ShortAnswerQuestion
+
 
 # ── DBレコードのレスポンス ──────────────────────────────────────────────────
 

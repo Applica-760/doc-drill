@@ -56,7 +56,7 @@ export default function DocumentSelect({ newDocument }: Props) {
     setFetchError(null);
     try {
       const docs = await listDocuments();
-      setDocuments(docs);
+      setDocuments(docs.filter((d) => d.source_type === "pdf"));
     } catch (e) {
       setFetchError(e instanceof Error ? e.message : "資料の取得に失敗しました");
     } finally {

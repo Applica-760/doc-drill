@@ -55,3 +55,15 @@ URLパスとHTTPメソッドに対応する処理を定義する。
 `Depends()` で注入する処理をまとめる。
 現在は `get_current_user` のみで、MVPでは固定UUIDのユーザーを返す。
 認証を実装する際はここだけを変更すれば、ルーター側は無変更で対応できる。
+
+## マイグレーション運用メモ
+
+マイグレーションファイルは `uv run` 経由で生成する（コンテナ内に `alembic` が PATH に入っていないため）。
+
+```bash
+docker compose exec backend uv run alembic revision --autogenerate -m "説明"
+docker compose exec backend uv run alembic upgrade head
+```
+
+**注意:** `NOT NULL` カラムを追加する場合、autogenerate は `server_default` を生成しない。
+既存レコードがある状態で適用すると制約違反になるため、生成後に手動で `server_default='値'` を追記すること。

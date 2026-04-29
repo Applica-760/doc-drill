@@ -76,7 +76,8 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 | id | UUID PK | |
 | user_id | UUID FK → users | |
 | file_name | TEXT | 元のファイル名 |
-| s3_key | TEXT | S3上のオブジェクトキー |
+| source_type | TEXT | 入力元（`pdf` / `local`） |
+| s3_key | TEXT nullable | S3上のオブジェクトキー（`local` の場合は null） |
 | kb_document_id | TEXT | Bedrock Knowledge BasesのドキュメントID |
 | created_at | TIMESTAMP | |
 
@@ -106,9 +107,11 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 
 | メソッド | パス | 説明 |
 |---|---|---|
-| POST | `/documents` | PDFアップロード |
+| POST | `/documents` | PDFアップロード（S3保存・KB登録） |
+| POST | `/documents/local` | ローカル資料の登録（`name` のみ受け取りダミードキュメントを生成） |
 | GET | `/documents` | 資料一覧 |
 | DELETE | `/documents/:id` | 資料削除 |
+| POST | `/documents/:id/questions/import` | 問題のJSONインポート（`source_type: local` の資料のみ） |
 | POST | `/questions/generate` | 問題生成（`document_id` を受け取り `questions` に保存） |
 | GET | `/questions` | 問題一覧（再出題用） |
 | GET | `/questions/:id` | 問題取得 |

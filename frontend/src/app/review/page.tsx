@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Box,
   Container,
   Title,
   Text,
@@ -13,9 +14,10 @@ import {
   Alert,
   Loader,
   Accordion,
+  ActionIcon,
 } from "@mantine/core";
-import { IconAlertCircle, IconArrowRight } from "@tabler/icons-react";
-import { listDocuments, listQuestions } from "@/lib/api";
+import { IconAlertCircle, IconArrowRight, IconTrash } from "@tabler/icons-react";
+import { listDocuments, listQuestions, deleteDocument } from "@/lib/api";
 import type { Document, Question } from "@/lib/api";
 
 export default function ReviewPage() {
@@ -24,6 +26,7 @@ export default function ReviewPage() {
   const [questionsByDoc, setQuestionsByDoc] = useState<Record<string, Question[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -44,6 +47,16 @@ export default function ReviewPage() {
     }
     load();
   }, []);
+
+  async function handleDelete(id: string) {
+    setDeleteError(null);
+    try {
+      await deleteDocument(id);
+      setDocuments((prev) => prev.filter((d) => d.id !== id));
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "削除に失敗しました");
+    }
+  }
 
   if (loading) {
     return (
@@ -72,7 +85,7 @@ export default function ReviewPage() {
           問題一覧
         </Title>
         <Text c="dimmed" ta="center">
-          アップロード済みの資料がありません。
+          資料がありません。
         </Text>
       </Container>
     );
@@ -84,26 +97,40 @@ export default function ReviewPage() {
         問題一覧
       </Title>
 
+      {deleteError && (
+        <Alert icon={<IconAlertCircle size={16} />} color="red" mb="md" withCloseButton onClose={() => setDeleteError(null)}>
+          {deleteError}
+        </Alert>
+      )}
+
       <Accordion variant="separated" radius="md">
         {documents.map((doc) => {
           const qs = questionsByDoc[doc.id] ?? [];
           return (
             <Accordion.Item key={doc.id} value={doc.id}>
-              <Accordion.Control>
-                <Group justify="space-between" wrap="nowrap" pr="md">
-                  <div style={{ minWidth: 0 }}>
-                    <Text fw={500} truncate>
-                      {doc.file_name}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      {new Date(doc.created_at).toLocaleString("ja-JP")}
-                    </Text>
-                  </div>
+              <Box style={{ display: "flex", alignItems: "center" }}>
+                <Accordion.Control style={{ flex: 1, minWidth: 0 }}>
+                  <Text fw={500} truncate>
+                    {doc.file_name}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {new Date(doc.created_at).toLocaleString("ja-JP")}
+                  </Text>
+                </Accordion.Control>
+                <Group gap="xs" wrap="nowrap" pr="md">
                   <Badge variant="light" color={qs.length > 0 ? "blue" : "gray"}>
                     {qs.length}問
                   </Badge>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    onClick={() => handleDelete(doc.id)}
+                    aria-label="削除"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
                 </Group>
-              </Accordion.Control>
+              </Box>
 
               <Accordion.Panel>
                 {qs.length === 0 ? (

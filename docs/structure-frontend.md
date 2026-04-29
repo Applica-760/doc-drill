@@ -47,3 +47,12 @@ frontend/src/
 ## 状態管理
 
 MVP では Server Component を積極的には使わず、`useState` / `useEffect` によるClient-side fetchで統一する。
+
+## トラブルシューティング
+
+**`Could not parse module` エラーが出る場合:**  
+Turbopack のキャッシュが古い状態のまま残っている。新規ファイル追加・既存ファイルの上書きいずれでも発生しうる。`.next` を削除してコンテナを再起動する。
+
+```bash
+docker compose exec frontend rm -rf /app/.next && docker compose restart frontend
+```
