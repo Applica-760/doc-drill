@@ -13,6 +13,8 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "boto3>=1.34",
     "pydantic-settings>=2.0",
+    "pypdf>=4.0",
+    "pgvector>=0.3",
 ]
 
 [dependency-groups]

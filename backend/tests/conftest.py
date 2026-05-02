@@ -41,6 +41,9 @@ def test_engine():
     admin_engine.dispose()
 
     engine = create_engine(TEST_DATABASE_URL)
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
     Base.metadata.create_all(engine)
 
     # MVP ユーザーをコミット済みで挿入する（ロールバックされない）
