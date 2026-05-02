@@ -39,11 +39,37 @@
 
 ## Phase 3: AWS反映
 
-- [ ] Terraform から Bedrock Knowledge Bases / OpenSearch Serverless リソースを削除
-- [ ] ECS タスク定義の不要な環境変数を削除（`BEDROCK_KB_ENABLED` / `BEDROCK_KB_ID` / `BEDROCK_KB_DATA_SOURCE_ID`）
-- [ ] `terraform apply` → AWS E2E確認（PDFアップロード → 問題生成）
-- [ ] `terraform destroy`
+- [x] `infra/main.tf` から `module "bedrock"` を削除
+- [x] `infra/ecs.tf` から `BEDROCK_KB_ENABLED` / `BEDROCK_KB_ID` / `BEDROCK_KB_DATA_SOURCE_ID` を削除
+- [x] `infra/outputs.tf` から `bedrock_kb_id` / `bedrock_data_source_id` outputを削除
+- [x] `infra/modules/iam/main.tf` から `backend_bedrock_kb` IAMポリシーを削除
+- [x] `terraform apply`（KB / AOSS / IAMポリシーをdestroy）
+- [x] `infra/modules/bedrock/` ディレクトリを削除
+- [x] AWS E2E確認（PDFアップロード → 問題生成）
+- [x] `terraform destroy`
 
 # 実行ログ
 
+### 試行 1: ARM64イメージをAMD64 ECSで実行
+- 実施内容: `docker build` を `--platform linux/amd64` なしでビルド・プッシュ
+- 結果: `exec /usr/bin/sh: exec format error` でECSタスクが起動不可
+- 判断: 棄却 → `--platform linux/amd64` 付きでリビルド
+
+### 試行 2: ビルド時に古いキャッシュが混入
+- 実施内容: `--no-cache` なしでビルド → alembicマイグレーションが3件（`a0bcac69c59e`）で止まる
+- 結果: `source_type` / `document_chunks` / `drop_kb_document_id` の3マイグレーションが未適用
+- 判断: 棄却 → `--no-cache --platform linux/amd64` で再ビルド
+
+### 試行 3: Titan Embedのbedrock:InvokeModel権限漏れ
+- 実施内容: `modules/iam/main.tf` の `backend_bedrock_invoke` ポリシーが Claude系のみで Titan Embed 未許可
+- 結果: RAG ingestionおよび問題生成で `AccessDeniedException`（`amazon.titan-embed-text-v2:0`）
+- 判断: 方針変更 → IAMポリシーに Titan Embed ARN を追加して `terraform apply`
+
+### 試行 4: terraform destroy 時のECR/S3非空エラー
+- 実施内容: `terraform destroy` 実行
+- 結果: ECRにイメージ残存・S3にオブジェクト残存でdestroy失敗
+- 判断: 方針変更 → ECRに `repository_force_delete = true` 追加・S3は手動で `aws s3 rm --recursive` 後にdestroy
+
 # 結果
+
+Phase 1〜3 完了。自作RAGパイプライン（pgvector + Bedrock Embeddings）への置き換えおよびAWS E2E確認まで完了。Bedrock Knowledge Bases / OpenSearch Serverlessリソースは撤廃済み。

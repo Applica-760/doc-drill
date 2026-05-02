@@ -80,15 +80,6 @@ output "backend_alb_dns" {
   value = module.alb_backend.dns_name
 }
 
-# bedrock
-output "bedrock_kb_id" {
-  value = module.bedrock.knowledge_base_id
-}
-
-output "bedrock_data_source_id" {
-  value = module.bedrock.data_source_id
-}
-
 # ecs
 output "ecs_cluster_arn" {
   value = module.ecs_cluster.cluster_arn

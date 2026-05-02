@@ -19,6 +19,7 @@ module "ecr_frontend" {
   repository_name                 = "${var.project}/frontend"
   repository_image_tag_mutability = "MUTABLE"
   repository_image_scan_on_push   = true
+  repository_force_delete         = true
 
   repository_lifecycle_policy = jsonencode({
     rules = [{
@@ -41,6 +42,7 @@ module "ecr_backend" {
   repository_name                 = "${var.project}/backend"
   repository_image_tag_mutability = "MUTABLE"
   repository_image_scan_on_push   = true
+  repository_force_delete         = true
 
   repository_lifecycle_policy = jsonencode({
     rules = [{

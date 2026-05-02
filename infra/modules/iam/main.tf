@@ -103,33 +103,9 @@ resource "aws_iam_role_policy" "backend_bedrock_invoke" {
         "arn:aws:bedrock:${var.aws_region}:${local.account_id}:inference-profile/jp.anthropic.claude-*",
         # jp.* プロファイルが実際にルーティングする大阪リージョンの foundation model
         "arn:aws:bedrock:ap-northeast-3::foundation-model/anthropic.claude-*",
+        # Titan Embed Text v2（RAGパイプラインのembedding用）
+        "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.titan-embed-text-v2:0",
       ]
     }]
-  })
-}
-
-# Bedrock Knowledge Bases: PDF 登録（Ingestion）・類似検索（Retrieve）
-# KB ARN は Step 8（bedrock モジュール）で確定するため、現時点では * で許可しスコープを絞る
-resource "aws_iam_role_policy" "backend_bedrock_kb" {
-  name = "bedrock-knowledge-base"
-  role = aws_iam_role.backend_task.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "bedrock:StartIngestionJob",
-          "bedrock:GetIngestionJob",
-        ]
-        Resource = "arn:aws:bedrock:${var.aws_region}:${local.account_id}:knowledge-base/*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = "bedrock:Retrieve"
-        Resource = "arn:aws:bedrock:${var.aws_region}:${local.account_id}:knowledge-base/*"
-      },
-    ]
   })
 }
