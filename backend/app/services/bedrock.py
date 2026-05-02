@@ -1,13 +1,13 @@
-import base64
 import json
 import logging
 
 import boto3
 from botocore.exceptions import ClientError
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.document import Document
-from app.services import s3
+from app.services import vector_store
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,6 @@ _USER_PROMPT_TEMPLATE = """\
 def _parse_questions(raw: str) -> list[dict]:
     """Claude のレスポンスから JSON 配列を抽出してパースする。"""
     text = raw.strip()
-    # コードブロック（```json ... ```）が含まれる場合に除去
     if text.startswith("```"):
         text = text.split("```")[1]
         if text.startswith("json"):
@@ -58,80 +57,12 @@ def _parse_questions(raw: str) -> list[dict]:
     return json.loads(text)
 
 
-def generate_questions(document: Document, count: int) -> list[dict]:
-    """Bedrock Claude を呼び出して短答式問題を生成する。
-
-    KB 有効時（本番）: Bedrock Knowledge Bases から関連チャンクを取得しコンテキストとして渡す。
-    KB 無効時（ローカル）: S3/MinIO から PDF を直接取得して Claude に送信する。
-    """
-    if settings.bedrock_kb_enabled:
-        return _generate_with_kb(document, count)
-    else:
-        return _generate_with_pdf(document, count)
-
-
-def _generate_with_pdf(document: Document, count: int) -> list[dict]:
-    """PDF を直接 Claude に送信して問題を生成する（KB 無効時 / ローカル開発用）。
-
-    ローカル環境では KB が存在しないため、MinIO から PDF を取得して
-    Claude のドキュメント入力として直接渡す。
-    AWS デプロイ後は _generate_with_kb に切り替わる。
-    """
-    pdf_bytes = s3.get_file_bytes(document.s3_key)
-    pdf_b64 = base64.standard_b64encode(pdf_bytes).decode()
-
-    body = json.dumps({
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 4096,
-        "system": _SYSTEM_PROMPT,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "document",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "application/pdf",
-                            "data": pdf_b64,
-                        },
-                    },
-                    {
-                        "type": "text",
-                        "text": _USER_PROMPT_TEMPLATE.format(count=count),
-                    },
-                ],
-            }
-        ],
-    })
-
-    return _invoke_model(body)
-
-
-def _generate_with_kb(document: Document, count: int) -> list[dict]:
-    """Bedrock Knowledge Base から関連チャンクを取得して問題を生成する（KB 有効時 / 本番用）。
-
-    ローカル開発では bedrock_kb_enabled=false のためこのパスは通らない。
-    """
-    bedrock_agent_runtime = make_bedrock_client("bedrock-agent-runtime")
-
-    try:
-        retrieve_response = bedrock_agent_runtime.retrieve(
-            knowledgeBaseId=settings.bedrock_kb_id,
-            retrievalQuery={"text": "この資料の重要な概念・用語・事実"},
-            retrievalConfiguration={
-                "vectorSearchConfiguration": {"numberOfResults": 10}
-            },
-        )
-        contexts = [
-            r["content"]["text"]
-            for r in retrieve_response.get("retrievalResults", [])
-        ]
-    except ClientError as e:
-        logger.warning("KB retrieval failed: %s", e.response["Error"]["Message"])
-        contexts = []
-
-    context_text = "\n\n".join(contexts) if contexts else "（資料の取得に失敗しました）"
+def generate_questions(document: Document, count: int, db: Session) -> list[dict]:
+    """pgvector で類似チャンクを取得し、Bedrock Claude で短答式問題を生成する。"""
+    contexts = vector_store.search(
+        db, "この資料の重要な概念・用語・事実", document_id=document.id, top_k=10
+    )
+    context_text = "\n\n".join(contexts) if contexts else "（資料のチャンクが見つかりませんでした）"
 
     body = json.dumps({
         "anthropic_version": "bedrock-2023-05-31",

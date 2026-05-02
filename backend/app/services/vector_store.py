@@ -23,12 +23,14 @@ def store_chunks(db: Session, document_id: uuid.UUID, chunks: list[str]) -> None
     db.commit()
 
 
-def search(db: Session, query: str, top_k: int = 10) -> list[str]:
+def search(db: Session, query: str, document_id: uuid.UUID | None = None, top_k: int = 10) -> list[str]:
     """クエリに類似するチャンクテキストを返す（コサイン距離昇順）。"""
     query_vec = emb_service.embed(query)
-    rows = db.scalars(
+    stmt = (
         select(DocumentChunk)
         .order_by(DocumentChunk.embedding.cosine_distance(query_vec))
         .limit(top_k)
-    ).all()
-    return [r.chunk_text for r in rows]
+    )
+    if document_id is not None:
+        stmt = stmt.where(DocumentChunk.document_id == document_id)
+    return [r.chunk_text for r in db.scalars(stmt).all()]

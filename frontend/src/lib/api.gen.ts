@@ -173,8 +173,6 @@ export interface components {
             source_type: string;
             /** S3 Key */
             s3_key: string | null;
-            /** Kb Document Id */
-            kb_document_id: string | null;
             /**
              * Created At
              * Format: date-time

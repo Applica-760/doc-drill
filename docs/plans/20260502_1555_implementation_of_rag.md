@@ -28,14 +28,14 @@
 - [x] pgvector 保存・類似検索サービス実装（HNSW インデックス）
 - [x] 単体動作確認（スクリプトで parse→embed→store→search が通ること）
 
-## Phase 2: システム接続・KB撤廃
+## Phase 2: システム接続・KB撤廃 ✅ 2026-05-02
 
-- [ ] アップロードフロー（`routers/documents.py`）を変更：KB呼び出しを削除し、`BackgroundTasks` でRAGパイプライン（parse→embed→store）を非同期実行
-- [ ] 問題生成フロー（`services/bedrock.py` の `_generate_with_kb`）を pgvector 類似検索ベースに切り替え
-- [ ] `bedrock_kb_enabled` フラグ・`bedrock_kb_id` / `bedrock_kb_data_source_id` 設定を廃止、`services/knowledge_base.py` を削除
-- [ ] ドキュメント削除時（`DELETE /documents/{id}`）の `document_chunks` 連鎖削除を実装
-- [ ] `Document.kb_document_id` フィールドを削除（Alembicマイグレーション）
-- [ ] ローカルE2E確認（PDFアップロード → BackgroundTasks 処理完了 → 問題生成）
+- [x] アップロードフロー（`routers/documents.py`）を変更：KB呼び出しを削除し、`BackgroundTasks` でRAGパイプライン（parse→embed→store）を非同期実行
+- [x] 問題生成フロー（`services/bedrock.py` の `_generate_with_kb`）を pgvector 類似検索ベースに切り替え
+- [x] `bedrock_kb_enabled` フラグ・`bedrock_kb_id` / `bedrock_kb_data_source_id` 設定を廃止、`services/knowledge_base.py` を削除
+- [x] ドキュメント削除時（`DELETE /documents/{id}`）の `document_chunks` 連鎖削除を実装（ON DELETE CASCADE により自動）
+- [x] `Document.kb_document_id` フィールドを削除（Alembicマイグレーション）
+- [x] ローカルE2E確認（PDFアップロード → BackgroundTasks 処理完了 → document_chunks 保存確認）
 
 ## Phase 3: AWS反映
 

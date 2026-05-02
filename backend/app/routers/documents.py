@@ -1,23 +1,43 @@
+import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.session import SessionLocal, get_db
 from app.dependencies.user import get_current_user
 from app.models.document import Document
 from app.models.question import Question
 from app.models.user import User
 from app.schemas.document import CreateLocalDocumentRequest, DocumentResponse
 from app.schemas.question import QuestionImportItem, QuestionResponse
-from app.services import knowledge_base, s3
+from app.services import pdf_parser, s3, vector_store
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+
+
+def _ingest_to_rag(document_id: uuid.UUID, s3_key: str) -> None:
+    """アップロード完了後にバックグラウンドでRAGパイプラインを実行する。
+
+    BackgroundTasks はリクエストセッションが閉じた後に動くため、独自セッションを使う。
+    エラーが発生してもレスポンス済みのため例外は握り潰してログに残す。
+    """
+    try:
+        pdf_bytes = s3.get_file_bytes(s3_key)
+        chunks = pdf_parser.extract_chunks(pdf_bytes)
+        with SessionLocal() as db:
+            vector_store.store_chunks(db, document_id, chunks)
+        logger.info("RAG ingestion complete: document_id=%s chunks=%d", document_id, len(chunks))
+    except Exception:
+        logger.exception("RAG ingestion failed: document_id=%s", document_id)
 
 
 @router.post("", response_model=DocumentResponse, status_code=201)
 def upload_document(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -26,23 +46,18 @@ def upload_document(
 
     s3.upload_file(file, s3_key)
 
-    # KB 登録は失敗してもアップロード自体は成功扱いとする。
-    # ローカル環境では bedrock_kb_enabled=false のため kb_document_id は常に None。
-    # AWS デプロイ時は ingestionJobId が保存される。
-    kb_document_id = knowledge_base.ingest_document(s3_key)
-
-    # NOTE: S3アップロード成功後にDB書き込みが失敗すると、S3にファイルだけ残る孤立データが生まれる。
-    # MVPでは許容するが、本番化の際はトランザクション補償（S3ロールバック or 定期クリーンアップ）が必要。
     document = Document(
         id=document_id,
         user_id=current_user.id,
         file_name=file.filename,
         s3_key=s3_key,
-        kb_document_id=kb_document_id,
     )
     db.add(document)
     db.commit()
     db.refresh(document)
+
+    background_tasks.add_task(_ingest_to_rag, document.id, s3_key)
+
     return document
 
 
@@ -65,7 +80,6 @@ def create_local_document(
         file_name=req.name,
         source_type="local",
         s3_key=None,
-        kb_document_id=None,
     )
     db.add(document)
     db.commit()
@@ -124,8 +138,6 @@ def delete_document(
 
     if document.s3_key is not None:
         s3.delete_file(document.s3_key)
-    # NOTE: S3 から削除しても KB のベクトルデータは残る。
-    # AWS デプロイ時は削除後に start_ingestion_job を呼んで再 sync しないと、
-    # 削除済み資料の内容が問題生成に混入するリスクがある。MVPでは許容する。
+    # document_chunks は ON DELETE CASCADE で自動削除される
     db.delete(document)
     db.commit()

@@ -28,101 +28,55 @@ def test_parse_questions_invalid_json_raises():
         _parse_questions("not valid json at all")
 
 
-# ── generate_questions のルーティング ─────────────────────────────────────────
-
-
-def test_generate_questions_routes_to_pdf_when_kb_disabled(mocker):
-    mock_pdf = mocker.patch(
-        "app.services.bedrock._generate_with_pdf", return_value=[]
-    )
-    mocker.patch.object(bedrock_module.settings, "bedrock_kb_enabled", new=False)
-
-    doc = MagicMock()
-    generate_questions(doc, 3)
-
-    mock_pdf.assert_called_once_with(doc, 3)
-
-
-def test_generate_questions_routes_to_kb_when_kb_enabled(mocker):
-    mock_kb = mocker.patch(
-        "app.services.bedrock._generate_with_kb", return_value=[]
-    )
-    mocker.patch.object(bedrock_module.settings, "bedrock_kb_enabled", new=True)
-
-    doc = MagicMock()
-    generate_questions(doc, 3)
-
-    mock_kb.assert_called_once_with(doc, 3)
-
-
-# ── _generate_with_pdf ────────────────────────────────────────────────────────
+# ── generate_questions ────────────────────────────────────────────────────────
 
 
 def _make_bedrock_response(questions: list[dict]) -> MagicMock:
-    """Bedrock invoke_model のレスポンス形式を模倣した Mock を返す。"""
     body_content = json.dumps({"content": [{"text": json.dumps(questions)}]})
     mock_body = MagicMock()
     mock_body.read.return_value = body_content.encode()
     return {"body": mock_body}
 
 
-def test_generate_with_pdf_calls_bedrock(mocker):
-    mocker.patch(
-        "app.services.bedrock.s3.get_file_bytes",
-        return_value=b"%PDF-1.4 dummy",
-    )
+def test_generate_questions_uses_vector_store_and_calls_model(mocker):
     expected = [{"body": "Q", "answer": "A", "explanation": "E"}]
+    mocker.patch(
+        "app.services.bedrock.vector_store.search",
+        return_value=["chunk1", "chunk2"],
+    )
     mock_client = MagicMock()
     mock_client.invoke_model.return_value = _make_bedrock_response(expected)
-    mocker.patch(
-        "app.services.bedrock.make_bedrock_client", return_value=mock_client
-    )
+    mocker.patch("app.services.bedrock.make_bedrock_client", return_value=mock_client)
 
     doc = MagicMock()
-    doc.s3_key = "documents/test/test.pdf"
+    db = MagicMock()
+    result = generate_questions(doc, 1, db)
 
-    result = bedrock_module._generate_with_pdf(doc, 1)
-
-    assert result == expected
+    bedrock_module.vector_store.search.assert_called_once()
     mock_client.invoke_model.assert_called_once()
+    assert result == expected
 
 
-# ── _generate_with_kb ─────────────────────────────────────────────────────────
-
-
-def test_generate_with_kb_calls_retrieve_then_model(mocker):
+def test_generate_questions_empty_chunks_still_calls_model(mocker):
+    """チャンクが空でも invoke_model を呼び、結果を返す。"""
     expected = [{"body": "Q", "answer": "A", "explanation": "E"}]
+    mocker.patch("app.services.bedrock.vector_store.search", return_value=[])
     mock_client = MagicMock()
-    mock_client.retrieve.return_value = {
-        "retrievalResults": [{"content": {"text": "some context"}}]
-    }
     mock_client.invoke_model.return_value = _make_bedrock_response(expected)
-    mocker.patch(
-        "app.services.bedrock.make_bedrock_client", return_value=mock_client
-    )
+    mocker.patch("app.services.bedrock.make_bedrock_client", return_value=mock_client)
 
-    result = bedrock_module._generate_with_kb(MagicMock(), 1)
+    result = generate_questions(MagicMock(), 1, MagicMock())
 
-    mock_client.retrieve.assert_called_once()
     mock_client.invoke_model.assert_called_once()
     assert result == expected
 
 
-def test_generate_with_kb_handles_retrieve_failure(mocker):
-    """KB retrieve が失敗してもフォールバックして invoke_model を呼ぶ。"""
-    expected = [{"body": "Q", "answer": "A", "explanation": "E"}]
+def test_invoke_model_raises_on_client_error(mocker):
+    mocker.patch("app.services.bedrock.vector_store.search", return_value=[])
     mock_client = MagicMock()
-    error_response = {
-        "Error": {"Code": "ResourceNotFoundException", "Message": "KB not found"}
-    }
-    mock_client.retrieve.side_effect = ClientError(error_response, "Retrieve")
-    mock_client.invoke_model.return_value = _make_bedrock_response(expected)
-    mocker.patch(
-        "app.services.bedrock.make_bedrock_client", return_value=mock_client
-    )
+    error_response = {"Error": {"Code": "ThrottlingException", "Message": "throttled"}}
+    mock_client.invoke_model.side_effect = ClientError(error_response, "InvokeModel")
+    mocker.patch("app.services.bedrock.make_bedrock_client", return_value=mock_client)
 
-    result = bedrock_module._generate_with_kb(MagicMock(), 1)
-
-    # retrieve 失敗後もフォールバックして invoke_model が呼ばれ結果が返る
-    mock_client.invoke_model.assert_called_once()
-    assert result == expected
+    with pytest.raises(RuntimeError, match="Bedrock invoke_model failed"):
+        generate_questions(MagicMock(), 1, MagicMock())

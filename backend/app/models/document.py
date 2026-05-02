@@ -15,7 +15,6 @@ class Document(Base):
     file_name: Mapped[str] = mapped_column(Text, nullable=False)
     source_type: Mapped[str] = mapped_column(Text, nullable=False, default="pdf")
     s3_key: Mapped[str | None] = mapped_column(Text, nullable=True)
-    kb_document_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

@@ -19,7 +19,7 @@ def mock_bedrock_generate(mocker):
 
 
 @pytest.fixture
-def uploaded_doc_id(client, mock_s3, mock_kb_ingest) -> str:
+def uploaded_doc_id(client, mock_s3, mock_rag_ingest) -> str:
     """テスト用のドキュメントをアップロードして ID を返す。"""
     files = {"file": ("test.pdf", BytesIO(b"%PDF-1.4 dummy"), "application/pdf")}
     response = client.post("/documents", files=files)
@@ -73,17 +73,14 @@ def test_list_questions_all(client, uploaded_doc_id, mock_bedrock_generate):
 
 
 def test_list_questions_filtered_by_document_id(
-    client, uploaded_doc_id, mock_bedrock_generate, mock_s3, mock_kb_ingest
+    client, uploaded_doc_id, mock_bedrock_generate, mock_s3, mock_rag_ingest
 ):
-    # 1 件目のドキュメントに問題を生成
     client.post("/questions/generate", json={"document_id": uploaded_doc_id, "count": 2})
 
-    # 2 件目のドキュメントをアップロードして問題を生成
     files = {"file": ("other.pdf", BytesIO(b"%PDF-1.4"), "application/pdf")}
     other_doc_id = client.post("/documents", files=files).json()["id"]
     client.post("/questions/generate", json={"document_id": other_doc_id, "count": 2})
 
-    # 1 件目のみでフィルタ
     response = client.get(f"/questions?document_id={uploaded_doc_id}")
 
     assert response.status_code == 200

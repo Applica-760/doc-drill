@@ -117,9 +117,6 @@ def mock_s3(mocker):
 
 
 @pytest.fixture
-def mock_kb_ingest(mocker):
-    """knowledge_base.ingest_document をモックする。"""
-    return mocker.patch(
-        "app.services.knowledge_base.ingest_document",
-        return_value=None,
-    )
+def mock_rag_ingest(mocker):
+    """アップロード後のRAGパイプライン（BackgroundTask）をモックする。"""
+    return mocker.patch("app.routers.documents._ingest_to_rag")

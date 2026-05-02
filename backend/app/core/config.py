@@ -13,13 +13,6 @@ class Settings(BaseSettings):
     aws_secret_access_key: str = ""
     aws_default_region: str = "ap-northeast-1"
 
-    # Bedrock Knowledge Bases
-    # ローカル開発では false にして KB 登録をスキップする。
-    # AWS デプロイ時は true に設定し、kb_id / kb_data_source_id も必須。
-    bedrock_kb_enabled: bool = False
-    bedrock_kb_id: str = ""
-    bedrock_kb_data_source_id: str = ""
-
     # Bedrock Claude 呼び出し用モデルID
     # ap-northeast-1 では cross-region inference profile 経由が必須。
     # "jp." プレフィックスが日本リージョン向けプロファイルの識別子。
