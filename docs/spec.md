@@ -45,20 +45,17 @@
 [Next.js (ECS Fargate)]
         ↓ ALB
 [FastAPI (ECS Fargate)]
-   ↓            ↓
-[RDS PostgreSQL 16]  [Bedrock Knowledge Bases]  ※1
-                    ↓
-                 [S3: PDF保存]
+   ↓            ↓               ↓
+[RDS PostgreSQL 16]  [S3: PDF保存]  [Amazon Bedrock]
+ (pgvector拡張)                     ├── Titan Embed (埋め込み生成)
+                                    └── Claude (問題生成)
 
 インフラ全体をTerraformで管理（VPC・IAM・セキュリティグループ含む）
 ```
 
-**※1 RAG実装方針:**
-MVPではBedrock Knowledge Basesに委譲し、アーキテクチャ全体の動作確認を優先する。
-MVP完成後、以下を自前実装に置き換えることを目標とする:
-- PDF解析・チャンク分割
-- 埋め込みベクトルの生成・保存（pgvector または Amazon OpenSearch）
-- 類似検索・コンテキスト注入パイプライン
+**RAGパイプライン:**
+PDF → チャンク分割（pypdf / 500文字・100文字オーバーラップ）→ Titan Embed で埋め込み生成 → pgvector に保存。
+問題生成時は固定クエリで類似チャンクを検索し、コンテキストとして Claude に渡す。
 
 ## 5. データモデル
 
@@ -78,7 +75,6 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 | file_name | TEXT | 元のファイル名 |
 | source_type | TEXT | 入力元（`pdf` / `local`） |
 | s3_key | TEXT nullable | S3上のオブジェクトキー（`local` の場合は null） |
-| kb_document_id | TEXT | Bedrock Knowledge BasesのドキュメントID |
 | created_at | TIMESTAMP | |
 
 ### `questions` — 生成された問題
@@ -107,7 +103,7 @@ MVP完成後、以下を自前実装に置き換えることを目標とする:
 
 | メソッド | パス | 説明 |
 |---|---|---|
-| POST | `/documents` | PDFアップロード（S3保存・KB登録） |
+| POST | `/documents` | PDFアップロード（S3保存・RAG ingestion非同期実行） |
 | POST | `/documents/local` | ローカル資料の登録（`name` のみ受け取りダミードキュメントを生成） |
 | GET | `/documents` | 資料一覧 |
 | DELETE | `/documents/:id` | 資料削除 |

@@ -13,11 +13,11 @@ Internet
                                               │
                                ┌──────────────┴──────────────┐
                     [RDS PostgreSQL 16]            [Amazon Bedrock]
-                    (DB Subnetに隔離)              ├── Knowledge Bases
+                    (pgvector拡張込み)             ├── Titan Embed (invoke_model)
                                                    └── Claude (invoke_model)
                                                           ↑
                                                        [S3]
-                                                  (PDF保存 / KBデータソース)
+                                                  (PDF保存)
 ```
 
 ---
@@ -128,9 +128,6 @@ Internet
 | `DATABASE_URL` | Secrets Manager参照 | IAMで取得、平文設定不可 |
 | `S3_BUCKET` | `doc-drill-{account_id}` | |
 | `AWS_DEFAULT_REGION` | `ap-northeast-1` | |
-| `BEDROCK_KB_ENABLED` | `true` | |
-| `BEDROCK_KB_ID` | Terraform output | |
-| `BEDROCK_KB_DATA_SOURCE_ID` | Terraform output | |
 | `CORS_ORIGINS` | `["http://{frontend-alb-dns}"]` | フロントALBのDNSをTerraformで注入 |
 
 **設定しない変数（ローカルとの差分）:**
@@ -163,9 +160,7 @@ FastAPIコンテナ自身がAWSサービスを呼び出すための権限。
 | アクション | リソース | 用途 |
 |---|---|---|
 | `s3:GetObject` `s3:PutObject` `s3:DeleteObject` `s3:ListBucket` | doc-drillバケット | PDF保存・取得・削除 |
-| `bedrock:InvokeModel` | 東京リージョンの foundation model ARN・jp.* クロスリージョン推論プロファイル・大阪リージョンの foundation model ARN | 問題生成 |
-| `bedrock:StartIngestionJob` `bedrock:GetIngestionJob` | Knowledge Base ARN | PDF登録 |
-| `bedrock:Retrieve` | Knowledge Base ARN | 類似チャンク検索 |
+| `bedrock:InvokeModel` | 東京リージョンの foundation model ARN・jp.* クロスリージョン推論プロファイル・大阪リージョンの foundation model ARN・Titan Embed ARN | 問題生成・埋め込み |
 
 ### フロントエンド タスクロール
 
@@ -179,7 +174,7 @@ Next.jsはバックエンドをHTTPで呼ぶだけのためAWSサービス呼び
 |---|---|
 | バケット名 | `doc-drill-{aws_account_id}`（グローバル一意性のためaccount_idをサフィックスに） |
 | パブリックアクセス | 全てブロック |
-| 用途 | PDF保存（`documents/` プレフィックス）、Bedrock KBデータソース |
+| 用途 | PDF保存（`documents/` プレフィックス） |
 
 ---
 
@@ -187,7 +182,7 @@ Next.jsはバックエンドをHTTPで呼ぶだけのためAWSサービス呼び
 
 | 項目 | 値 |
 |---|---|
-| エンジン | postgres |
+| エンジン | postgres（pgvector拡張） |
 | バージョン | 16.6 |
 | インスタンスクラス | db.t3.micro |
 | ストレージ | 20GB (gp2) |
@@ -199,16 +194,16 @@ Next.jsはバックエンドをHTTPで呼ぶだけのためAWSサービス呼び
 
 ---
 
-## Bedrock Knowledge Bases 設計
+## RAGパイプライン設計
 
 | 項目 | 値 |
 |---|---|
-| 埋め込みモデル | `amazon.titan-embed-text-v2:0` |
-| ベクターストア | Bedrock マネージド（OpenSearch Serverless） |
-| データソース | S3バケット（`documents/` プレフィックス） |
-| チャンク戦略 | デフォルト（Bedrockに委譲） |
-
-> Phase 6でKnowledge Basesを切り離し、pgvector（RDS）を使った自作パイプラインに置き換える。
+| 埋め込みモデル | `amazon.titan-embed-text-v2:0`（Bedrock InvokeModel） |
+| ベクターストア | pgvector（RDS PostgreSQL 16拡張） |
+| チャンクサイズ | 500文字・オーバーラップ100文字 |
+| インデックス型 | HNSW |
+| 埋め込み次元数 | 1024 |
+| ingestion方式 | FastAPI `BackgroundTasks`（非同期） |
 
 ---
 
@@ -270,6 +265,5 @@ terraform {
 | オブジェクトストレージ | MinIO（Docker） | Amazon S3 |
 | DB | PostgreSQL 16（Docker） | RDS PostgreSQL 16（db.t3.micro） |
 | AWS認証 | 環境変数（access key） | IAMタスクロール |
-| Bedrock KB | 無効（`BEDROCK_KB_ENABLED=false`） | 有効 |
 | バックエンドURL | `http://localhost:8000` | `http://{backend-alb-dns}` |
 | DB接続情報 | `.env` ファイル | Secrets Manager |

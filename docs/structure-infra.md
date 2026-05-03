@@ -5,7 +5,7 @@ Terraform 1.7+ / AWS Provider ~> 5.0 / Random Provider ~> 3.0 / Time Provider ~>
 ## ディレクトリ構成
 
 networking / storage / database / alb / ecs は `terraform-aws-modules` を使ったフラットな `.tf` ファイル。
-カスタムモジュールは `iam/` と `bedrock/` のみ（公式モジュールが存在しない・設計意図を明示したいもの）。
+カスタムモジュールは `iam/` のみ（公式モジュールが存在しない・設計意図を明示したいもの）。
 
 ```
 infra/
@@ -14,7 +14,7 @@ infra/
 ├── backend.hcl              # バックエンドの実値（gitignore対象）
 ├── variables.tf             # 入力変数定義（aws_region, project）
 ├── terraform.tfvars         # 変数の実値（gitignore対象）
-├── main.tf                  # iam・bedrock モジュール呼び出し・データソース定義
+├── main.tf                  # iam モジュール呼び出し・データソース定義
 ├── outputs.tf               # 全体の出力を集約
 ├── networking.tf            # VPC（terraform-aws-modules/vpc）・セキュリティグループ
 ├── storage.tf               # S3（terraform-aws-modules/s3-bucket）・ECR（terraform-aws-modules/ecr）
@@ -23,8 +23,7 @@ infra/
 ├── ecs.tf                   # ECSクラスター・タスク定義・サービス（terraform-aws-modules/ecs）
 ├── .terraform.lock.hcl      # プロバイダーバージョンのロックファイル（コミット対象）
 └── modules/
-    ├── iam/                 # ECS Task Execution Role・Backend Task Role（カスタム）
-    └── bedrock/             # OpenSearch Serverless + Bedrock Knowledge Base（カスタム）
+    └── iam/                 # ECS Task Execution Role・Backend Task Role（カスタム）
 ```
 
 ## 初期化コマンド
@@ -96,30 +95,9 @@ ECS が必要とする IAM ロールとポリシーを管理する。
 | リソース | 概要 |
 |---|---|
 | `task-execution-role` | ECRプル・CloudWatch Logs書き込み・Secrets Manager読み取り（frontend/backend共用） |
-| `backend-task-role` | S3操作・Bedrock InvokeModel・Knowledge Base `bedrock:StartIngestionJob` / `bedrock:GetIngestionJob` / `bedrock:Retrieve` |
+| `backend-task-role` | S3操作・Bedrock InvokeModel（Claude・Titan Embed） |
 
 **出力:** `task_execution_role_arn`, `backend_task_role_arn`
-
-### `modules/bedrock/`（カスタム）
-
-OpenSearch Serverless コレクションと Bedrock Knowledge Base を管理する。
-
-| リソース | 概要 |
-|---|---|
-| `aws_iam_role` (bedrock_kb) | KB サービスロール（S3読み取り・Titan Embed呼び出し・AOSS操作） |
-| `aws_opensearchserverless_security_policy` (encryption) | AWS管理キーで暗号化 |
-| `aws_opensearchserverless_security_policy` (network) | パブリックアクセス許可（BedRock サービス + Terraform 実行者がAPIアクセスするため） |
-| `aws_opensearchserverless_access_policy` | KB サービスロールと Terraform 実行者 IAM プリンシパルにインデックス操作権限を付与 |
-| `aws_opensearchserverless_collection` | type=VECTORSEARCH |
-| `time_sleep` | コレクション ACTIVE 待機（120s） |
-| `null_resource` | `scripts/create_index.py` を呼び出しベクターインデックスを作成（Bedrock KB 作成前に必須） |
-| `aws_bedrockagent_knowledge_base` | Titan Embed v2 / OPENSEARCH_SERVERLESS ストレージ |
-| `aws_bedrockagent_data_source` | S3バケット `documents/` プレフィックス |
-
-`scripts/create_index.py` は boto3 と標準ライブラリのみで AWS SigV4 署名を実装し、
-外部パッケージ不要で動作する。インデックスが既存の場合はスキップする（べき等）。
-
-**出力:** `knowledge_base_id`, `data_source_id`
 
 ## Terraform ステート管理
 
