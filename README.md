@@ -38,7 +38,7 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 
 ## アーキテクチャ概要
 
-![アーキテクチャ図](docs/assets/architecture.svg)
+![アーキテクチャ図](docs/assets/system-overview.svg)
 
 ## 実装ロードマップ
 
