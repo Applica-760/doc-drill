@@ -41,21 +41,7 @@
 
 ## 4. アーキテクチャ構成
 
-```
-[Next.js (ECS Fargate)]
-        ↓ ALB
-[FastAPI (ECS Fargate)]
-   ↓            ↓               ↓
-[RDS PostgreSQL 16]  [S3: PDF保存]  [Amazon Bedrock]
- (pgvector拡張)                     ├── Titan Embed (埋め込み生成)
-                                    └── Claude (問題生成)
-
-インフラ全体をTerraformで管理（VPC・IAM・セキュリティグループ含む）
-```
-
-**RAGパイプライン:**
-PDF → チャンク分割（pypdf / 500文字・100文字オーバーラップ）→ Titan Embed で埋め込み生成 → pgvector に保存。
-問題生成時は固定クエリで類似チャンクを検索し、コンテキストとして Claude に渡す。
+→ [architecture.md](architecture.md) を参照。
 
 ## 5. データモデル
 

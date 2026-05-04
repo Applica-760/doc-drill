@@ -2,22 +2,59 @@
 
 ---
 
-## 全体構成図
+## 全体構成図（コンポーネント）
 
+![コンポーネント図](assets/system-overview.svg)
+
+---
+
+## RAGパイプライン（シーケンス）
+
+### PDFアップロード時
+
+```mermaid
+sequenceDiagram
+  participant frontend as Frontend
+  participant backend as Backend(Router)
+  participant s3 as S3
+  participant db as DB
+  participant bg as BackgroundTask
+  participant titan as Titan Embed
+
+  frontend->>backend: file Upload
+  backend->>s3: write PDF
+  backend->>db: write document record
+  backend->>bg:add_task
+  backend -->>frontend:201 Created
+  bg->>s3: get PDF
+  s3 -->> bg: PDF bytes
+  bg->>titan: PDF chunks
+  titan-->>bg:embedding vectors
+  bg->>db:write embedings
 ```
-Internet
-  │
-  ├──[Frontend ALB (Public, :80)]──→ [ECS: Next.js  (:3000)]
-  │                                          │ NEXT_PUBLIC_API_URL
-  └──[Backend  ALB (Public, :80)]──→ [ECS: FastAPI  (:8000)]
-                                              │
-                               ┌──────────────┴──────────────┐
-                    [RDS PostgreSQL 16]            [Amazon Bedrock]
-                    (pgvector拡張込み)             ├── Titan Embed (invoke_model)
-                                                   └── Claude (invoke_model)
-                                                          ↑
-                                                       [S3]
-                                                  (PDF保存)
+
+### 問題生成時
+
+```mermaid
+sequenceDiagram
+  participant frontend as Frontend
+  participant backend as Backend(Router)
+  participant db as DB
+  participant titan as Titan Embed
+  participant claude as Claude
+  
+
+  frontend->>backend: POST /questions/generate (document_id)
+  backend->>db: verify document
+  db-->>backend: document
+  backend->>titan: embed search query
+  titan-->>backend:query vector
+  backend->>db:pgvector similarity search
+  db-->>backend: 	similar chunks
+  backend->>claude: generate questions
+  claude-->>backend: questions(JSON)
+  backend->>db:write questions table
+  backend-->>frontend:201 + question list
 ```
 
 ---

@@ -31,7 +31,7 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 | Backend | FastAPI (Python) |
 | Database | RDS PostgreSQL 16 |
 | Storage | Amazon S3 |
-| AI / RAG | Amazon Bedrock (Claude) + Knowledge Bases（Phase 6 で pgvector に移行予定） |
+| AI / RAG | Amazon Bedrock (Claude + Titan Embed) + pgvector |
 | Infra | AWS ECS Fargate, VPC, ALB, IAM |
 | IaC | Terraform |
 | Dev | Docker, Docker Compose |
@@ -49,7 +49,7 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 | Phase 3 | フロントエンド実装（Next.js） | 完了 |
 | Phase 4 | AWSインフラ構築（Terraform） | 完了 |
 | Phase 5 | デプロイ・結合確認（ECR push → terraform apply → E2E 動作確認） | 完了 |
-| Phase 6 | 自作 RAG パイプラインへの置き換え（Bedrock KB 廃止・pgvector 化） | 未着手 |
+| Phase 6 | 自作 RAG パイプラインへの置き換え（Bedrock KB 廃止・pgvector 化） | 完了 |
 | Phase 7 | CI/CD パイプラインの整備（GitHub Actions + ECS 自動デプロイ） | 未着手 |
 
 ## ローカル起動
@@ -66,7 +66,7 @@ docker compose up --build
 | Backend API | http://localhost:8000 |
 | MinIO Console | http://localhost:9001 |
 
-> Bedrock 連携はデフォルト無効（`BEDROCK_KB_ENABLED=false`）。AWS 環境へのデプロイ時は `.env` で有効化する。
+> Bedrock 連携（Claude・Titan Embed）はローカルでも動作するが、`BEDROCK_AWS_ACCESS_KEY_ID` の設定が必要。
 
 ## ドキュメント
 
