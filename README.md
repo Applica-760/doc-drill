@@ -40,18 +40,6 @@ PDF などのドキュメントをアップロードし、RAG を用いて自動
 
 ![アーキテクチャ図](docs/assets/system-overview.svg)
 
-## 実装ロードマップ
-
-| フェーズ | 内容 | 状態 |
-|---|---|---|
-| Phase 1 | ローカル開発基盤（Docker Compose, モノレポ構成） | 完了 |
-| Phase 2 | バックエンド実装（FastAPI, Bedrock 連携） | 完了 |
-| Phase 3 | フロントエンド実装（Next.js） | 完了 |
-| Phase 4 | AWSインフラ構築（Terraform） | 完了 |
-| Phase 5 | デプロイ・結合確認（ECR push → terraform apply → E2E 動作確認） | 完了 |
-| Phase 6 | 自作 RAG パイプラインへの置き換え（Bedrock KB 廃止・pgvector 化） | 完了 |
-| Phase 7 | CI/CD パイプラインの整備（GitHub Actions + ECS 自動デプロイ） | 未着手 |
-
 ## ローカル起動
 
 ```bash
@@ -72,6 +60,7 @@ docker compose up --build
 
 | ドキュメント | 内容 |
 |---|---|
+| [ロードマップ](docs/roadmap.md) | 実装フェーズ一覧・進捗・今後の計画 |
 | [プロジェクト構造](docs/structure.md) | ディレクトリ構成・作業別の参照先ガイド |
 | [技術選定](docs/adr.md) | ADR（技術選定の意思決定記録） |
 | [アーキテクチャ](docs/architecture.md) | AWS 詳細構成 |

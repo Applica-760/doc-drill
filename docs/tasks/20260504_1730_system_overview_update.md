@@ -25,7 +25,7 @@ Bedrock Knowledge Bases / OpenSearch Serverless が消え、pgvector + 自作パ
 - [x] `docs/spec.md` を読み、仕様上のデータフロー定義を確認する
 
 ### Phase 2: インフラの確認
-- [ ] `docs/structure-backend.md` を読み、ファイル構成を把握する
+- [x] `docs/structure-backend.md` を読み、ファイル構成を把握する（Bedrockは残存・KBは廃止。services/の記述を現状に更新済み）
 - [ ] `infra/` の `.tf` ファイルを読み、実際に存在する AWS リソースを把握する
   - 消えたリソース: Bedrock Knowledge Bases / OpenSearch Serverless
   - 追加されたリソース: pgvector 拡張（RDS）
@@ -42,7 +42,10 @@ Bedrock Knowledge Bases / OpenSearch Serverless が消え、pgvector + 自作パ
 
 ## 実行ログ
 
-（未着手）
+### 試行 1: structure-backend.md の Bedrock 記述確認・修正
+- 実施内容: `services/` の実ファイルと照合。`bedrock.py` は現役（LLM + Titan Embed）だが、`embeddings.py` / `pdf_parser.py` / `vector_store.py` が未記載だった
+- 結果: コメント・責務説明を現状の5ファイル構成に更新
+- 判断: 続行
 
 ---
 

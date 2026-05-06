@@ -18,11 +18,11 @@ output "s3_bucket_arn" {
 
 # iam
 output "task_execution_role_arn" {
-  value = module.iam.task_execution_role_arn
+  value = aws_iam_role.task_execution.arn
 }
 
 output "backend_task_role_arn" {
-  value = module.iam.backend_task_role_arn
+  value = aws_iam_role.backend_task.arn
 }
 
 # networking

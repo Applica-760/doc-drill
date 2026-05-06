@@ -18,7 +18,7 @@ backend/
 │   ├── models/            # SQLAlchemyモデル（テーブル定義）
 │   ├── schemas/           # Pydanticスキーマ（リクエスト・レスポンスの型）
 │   ├── routers/           # エンドポイント定義
-│   ├── services/          # 外部サービスとのやり取り（S3・Bedrock）
+│   ├── services/          # 外部サービス・ドメイン処理（S3・Bedrock LLM/埋め込み・PDF解析・pgvectorベクトルDB）
 │   └── dependencies/      # FastAPIのDepends()で注入するもの
 └── pyproject.toml
 ```
@@ -48,8 +48,12 @@ URLパスとHTTPメソッドに対応する処理を定義する。
 ビジネスロジックは持たず、`services/` への委譲とレスポンスの組み立てに集中する。
 
 ### `services/`
-外部サービス（S3・Bedrock）との通信処理をまとめる。
-ここを差し替えることで、ローカル（MinIO）と本番（AWS S3）を切り替えられる設計になっている。
+外部サービスとの通信・ドメイン処理をまとめる。現在の構成:
+- `s3.py`: S3（ローカルはMinIO）へのファイル操作
+- `bedrock.py`: Bedrock boto3クライアント生成 + LLM（問題生成）
+- `embeddings.py`: Bedrock Titan Embed v2 による埋め込みベクトル生成
+- `pdf_parser.py`: PDF テキスト抽出・チャンク分割
+- `vector_store.py`: pgvector へのチャンク保存・類似検索
 
 ### `dependencies/`
 `Depends()` で注入する処理をまとめる。

@@ -28,8 +28,8 @@ resource "aws_ecs_task_definition" "backend" {
   network_mode             = "awsvpc"
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn       = module.iam.task_execution_role_arn
-  task_role_arn            = module.iam.backend_task_role_arn
+  execution_role_arn       = aws_iam_role.task_execution.arn
+  task_role_arn            = aws_iam_role.backend_task.arn
 
   container_definitions = jsonencode([{
     name  = "backend"
@@ -67,7 +67,7 @@ resource "aws_ecs_task_definition" "frontend" {
   network_mode             = "awsvpc"
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = module.iam.task_execution_role_arn
+  execution_role_arn       = aws_iam_role.task_execution.arn
 
   container_definitions = jsonencode([{
     name  = "frontend"
