@@ -26,7 +26,7 @@ Bedrock Knowledge Bases / OpenSearch Serverless が消え、pgvector + 自作パ
 
 ### Phase 2: インフラの確認
 - [x] `docs/structure-backend.md` を読み、ファイル構成を把握する（Bedrockは残存・KBは廃止。services/の記述を現状に更新済み）
-- [ ] `infra/` の `.tf` ファイルを読み、実際に存在する AWS リソースを把握する
+- [x] `infra/` の `.tf` ファイルを読み、実際に存在する AWS リソースを把握する（`docs/private/infra-terraform.md` に各ファイルの要素・役割を記録）
   - 消えたリソース: Bedrock Knowledge Bases / OpenSearch Serverless
   - 追加されたリソース: pgvector 拡張（RDS）
 
@@ -51,4 +51,5 @@ Bedrock Knowledge Bases / OpenSearch Serverless が消え、pgvector + 自作パ
 
 ## 結果
 
-（未着手）
+Phase 3（バックエンドコード読解）は未実施だが、図の更新（system-overview.svg）は別途完了済みのため本タスクをクローズ。
+infra読解中に発想したインフラシーケンス図の追記は `docs/tasks/20260506_1147_infra_sequence_diagram.md` に切り出し済み。
