@@ -13,6 +13,7 @@ from app.dependencies.user import MVP_USER_ID
 from app.main import app
 from app.models.base import Base
 from app.models.user import User
+
 # app.main の import チェーン（routers → models）で全モデルが Base.metadata に登録済み
 
 TEST_DATABASE_URL = os.environ.get(

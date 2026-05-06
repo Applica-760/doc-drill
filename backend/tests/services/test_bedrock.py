@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 import app.services.bedrock as bedrock_module
 from app.services.bedrock import _parse_questions, generate_questions
 
-
 # ── _parse_questions ──────────────────────────────────────────────────────────
 
 

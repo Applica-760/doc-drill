@@ -5,7 +5,6 @@ import app.services.s3 as s3_module
 from app.core.config import settings
 from app.services.s3 import delete_file, get_file_bytes, upload_file
 
-
 # ── fixtures ──────────────────────────────────────────────────────────────────
 # conftest の mock_s3 は routers テスト向けの汎用 fixture。
 # services テストでは boto3 メソッドの呼び出し引数を細かく検証したいため

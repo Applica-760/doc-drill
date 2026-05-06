@@ -3,7 +3,6 @@ from io import BytesIO
 
 import pytest
 
-
 _BEDROCK_RETURN = [
     {"body": "Q1", "answer": "A1", "explanation": "E1"},
     {"body": "Q2", "answer": "A2", "explanation": "E2"},
@@ -64,7 +63,10 @@ def test_generate_questions_bedrock_error(client, uploaded_doc_id, mocker):
 
 
 def test_list_questions_all(client, uploaded_doc_id, mock_bedrock_generate):
-    client.post("/questions/generate", json={"document_id": uploaded_doc_id, "count": 2})
+    client.post(
+        "/questions/generate",
+        json={"document_id": uploaded_doc_id, "count": 2},
+    )
 
     response = client.get("/questions")
 
@@ -75,7 +77,10 @@ def test_list_questions_all(client, uploaded_doc_id, mock_bedrock_generate):
 def test_list_questions_filtered_by_document_id(
     client, uploaded_doc_id, mock_bedrock_generate, mock_s3, mock_rag_ingest
 ):
-    client.post("/questions/generate", json={"document_id": uploaded_doc_id, "count": 2})
+    client.post(
+        "/questions/generate",
+        json={"document_id": uploaded_doc_id, "count": 2},
+    )
 
     files = {"file": ("other.pdf", BytesIO(b"%PDF-1.4"), "application/pdf")}
     other_doc_id = client.post("/documents", files=files).json()["id"]
