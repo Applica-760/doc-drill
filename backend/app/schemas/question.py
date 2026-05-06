@@ -4,7 +4,6 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ── 問題生成リクエスト ──────────────────────────────────────────────────────
 
 class GenerateQuestionsRequest(BaseModel):
@@ -37,7 +36,8 @@ QuestionDetail = Annotated[
     Field(discriminator="question_type"),
 ]
 
-# インポートエンドポイントで受け取る1問分のスキーマ（現時点では ShortAnswerQuestion と同一）
+# インポートエンドポイントで受け取る1問分のスキーマ
+# （現時点では ShortAnswerQuestion と同一）
 QuestionImportItem = ShortAnswerQuestion
 
 

@@ -29,7 +29,9 @@ def _ingest_to_rag(document_id: uuid.UUID, s3_key: str) -> None:
         chunks = pdf_parser.extract_chunks(pdf_bytes)
         with SessionLocal() as db:
             vector_store.store_chunks(db, document_id, chunks)
-        logger.info("RAG ingestion complete: document_id=%s chunks=%d", document_id, len(chunks))
+        logger.info(
+            "RAG ingestion complete: document_id=%s chunks=%d", document_id, len(chunks)
+        )
     except Exception:
         logger.exception("RAG ingestion failed: document_id=%s", document_id)
 
@@ -37,10 +39,10 @@ def _ingest_to_rag(document_id: uuid.UUID, s3_key: str) -> None:
 @router.post("", response_model=DocumentResponse, status_code=201)
 def upload_document(
     file: UploadFile = File(...),
-    background_tasks: BackgroundTasks = None,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> DocumentResponse:
     document_id = uuid.uuid4()
     s3_key = f"documents/{document_id}/{file.filename}"
 
@@ -65,7 +67,7 @@ def upload_document(
 def list_documents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> list[DocumentResponse]:
     return db.query(Document).filter(Document.user_id == current_user.id).all()
 
 
@@ -74,7 +76,7 @@ def create_local_document(
     req: CreateLocalDocumentRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> DocumentResponse:
     document = Document(
         user_id=current_user.id,
         file_name=req.name,
@@ -87,13 +89,17 @@ def create_local_document(
     return document
 
 
-@router.post("/{document_id}/questions/import", response_model=list[QuestionResponse], status_code=201)
+@router.post(
+    "/{document_id}/questions/import",
+    response_model=list[QuestionResponse],
+    status_code=201,
+)
 def import_questions(
     document_id: uuid.UUID,
     items: list[QuestionImportItem],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> list[QuestionResponse]:
     document = (
         db.query(Document)
         .filter(Document.id == document_id, Document.user_id == current_user.id)
@@ -102,7 +108,9 @@ def import_questions(
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
     if document.source_type != "local":
-        raise HTTPException(status_code=400, detail="このエンドポイントはローカル問題セット専用です")
+        raise HTTPException(
+            status_code=400, detail="このエンドポイントはローカル問題セット専用です"
+        )
 
     questions = [
         Question(
@@ -127,7 +135,7 @@ def delete_document(
     document_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> None:
     document = (
         db.query(Document)
         .filter(Document.id == document_id, Document.user_id == current_user.id)

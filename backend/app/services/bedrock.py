@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -19,7 +20,7 @@ def make_bedrock_client(service: str) -> boto3.client:
     Bedrock には BEDROCK_AWS_ACCESS_KEY_ID を別途指定する。
     AWS デプロイ時はこれらが空文字になり、boto3 が IAM タスクロールを自動使用する。
     """
-    kwargs: dict = {"region_name": settings.aws_default_region}
+    kwargs: dict[str, str] = {"region_name": settings.aws_default_region}
     if settings.bedrock_aws_access_key_id:
         kwargs["aws_access_key_id"] = settings.bedrock_aws_access_key_id
         kwargs["aws_secret_access_key"] = settings.bedrock_aws_secret_access_key
@@ -30,6 +31,8 @@ _SYSTEM_PROMPT = (
     "あなたは教育コンテンツの作成アシスタントです。"
     "指示に従い、必ず有効なJSON配列のみを返してください。前置きや説明文は一切不要です。"
 )
+
+_NO_CHUNK_FALLBACK = "（資料のチャンクが見つかりませんでした）"
 
 _USER_PROMPT_TEMPLATE = """\
 以下の資料を読み、短答式の問題を{count}問作成してください。
@@ -46,7 +49,7 @@ _USER_PROMPT_TEMPLATE = """\
 """
 
 
-def _parse_questions(raw: str) -> list[dict]:
+def _parse_questions(raw: str) -> list[dict[str, Any]]:
     """Claude のレスポンスから JSON 配列を抽出してパースする。"""
     text = raw.strip()
     if text.startswith("```"):
@@ -57,12 +60,14 @@ def _parse_questions(raw: str) -> list[dict]:
     return json.loads(text)
 
 
-def generate_questions(document: Document, count: int, db: Session) -> list[dict]:
+def generate_questions(
+    document: Document, count: int, db: Session
+) -> list[dict[str, Any]]:
     """pgvector で類似チャンクを取得し、Bedrock Claude で短答式問題を生成する。"""
     contexts = vector_store.search(
         db, "この資料の重要な概念・用語・事実", document_id=document.id, top_k=10
     )
-    context_text = "\n\n".join(contexts) if contexts else "（資料のチャンクが見つかりませんでした）"
+    context_text = "\n\n".join(contexts) if contexts else _NO_CHUNK_FALLBACK
 
     body = json.dumps({
         "anthropic_version": "bedrock-2023-05-31",
@@ -74,7 +79,9 @@ def generate_questions(document: Document, count: int, db: Session) -> list[dict
                 "content": [
                     {
                         "type": "text",
-                        "text": f"以下は資料から抜粋したテキストです。\n\n{context_text}",
+                        "text": (
+                            f"以下は資料から抜粋したテキストです。\n\n{context_text}"
+                        ),
                     },
                     {
                         "type": "text",
@@ -88,7 +95,7 @@ def generate_questions(document: Document, count: int, db: Session) -> list[dict
     return _invoke_model(body)
 
 
-def _invoke_model(body: str) -> list[dict]:
+def _invoke_model(body: str) -> list[dict[str, Any]]:
     bedrock_runtime = make_bedrock_client("bedrock-runtime")
 
     try:

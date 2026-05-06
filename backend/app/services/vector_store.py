@@ -1,6 +1,5 @@
 import uuid
 
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -23,7 +22,12 @@ def store_chunks(db: Session, document_id: uuid.UUID, chunks: list[str]) -> None
     db.commit()
 
 
-def search(db: Session, query: str, document_id: uuid.UUID | None = None, top_k: int = 10) -> list[str]:
+def search(
+    db: Session,
+    query: str,
+    document_id: uuid.UUID | None = None,
+    top_k: int = 10,
+) -> list[str]:
     """クエリに類似するチャンクテキストを返す（コサイン距離昇順）。"""
     query_vec = emb_service.embed(query)
     stmt = (

@@ -19,7 +19,7 @@ def generate_questions(
     req: GenerateQuestionsRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> list[QuestionResponse]:
     document = (
         db.query(Document)
         .filter(Document.id == req.document_id, Document.user_id == current_user.id)
@@ -56,7 +56,7 @@ def list_questions(
     document_id: uuid.UUID | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> list[QuestionResponse]:
     query = (
         db.query(Question)
         .join(Document, Question.document_id == Document.id)
@@ -72,7 +72,7 @@ def get_question(
     question_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> QuestionResponse:
     question = (
         db.query(Question)
         .join(Document, Question.document_id == Document.id)

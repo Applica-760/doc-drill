@@ -12,7 +12,7 @@
 | Phase 6 | 自作RAGパイプラインへの置き換え（Bedrock KB 廃止・pgvector 化） | 完了 |
 | Phase 7 | ローカル定型問題モード | 完了 |
 | Phase 8 | 定型問題セットの作成 | 完了 |
-| Phase 9 | Python ツール整備（ruff / mypy） | 未着手 |
+| Phase 9 | Python ツール整備（ruff / mypy） | 完了 |
 | Phase 10 | CI/CD パイプラインの整備（GitHub Actions + ECS 自動デプロイ） | 未着手 |
 | Phase 11 | リファクタリング | 未着手 |
 
@@ -83,13 +83,13 @@ Bedrock Knowledge Bases（OpenSearch Serverless: $700+/月）を廃止し、pgve
 - [x] `adr.md` ベースの技術選定問題セット（各ADRにつきトレードオフ形式で1問）
 - [x] 問題セットを `docs/private/test.json` に70問格納・演習フロー通し確認
 
-## Phase 9: Python ツール整備
+## Phase 9: Python ツール整備 ✅ 2026-05-06
 
 CI を組む前提条件。Python に lint/型チェック設定がない状態で CI を組むと「何でも通る CI」になるため先行する（TypeScript 側は `strict: true` + ESLint 設定済みのため対象外）。
 
-- [ ] `backend/pyproject.toml` に ruff（lint）を追加・設定
-- [ ] `backend/pyproject.toml` に mypy（型チェック）を追加・設定
-- [ ] 既存コードを ruff / mypy が通る状態に修正
+- [x] `backend/pyproject.toml` に ruff（lint）を追加・設定
+- [x] `backend/pyproject.toml` に mypy（型チェック）を追加・設定
+- [x] 既存コードを ruff / mypy が通る状態に修正
 
 ## Phase 10: CI/CD パイプラインの整備
 
