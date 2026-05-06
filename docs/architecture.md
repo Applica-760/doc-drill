@@ -2,9 +2,13 @@
 
 ---
 
-## 全体構成図（コンポーネント）
+## コンポーネント図
 
 ![コンポーネント図](assets/system-overview.svg)
+
+## ネットワークトポロジー
+
+![ネットワークトポロジー](assets/infra-network.svg)
 
 ---
 
