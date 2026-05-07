@@ -56,6 +56,19 @@ AI推論にはAmazon Bedrockを採用（Claude による問題生成・Titan Emb
 
 ---
 
+## フロントエンドUIの役割分担: Mantine UI + Tailwind CSS
+
+Mantine UI をインタラクティブコンポーネント、Tailwind CSS をレイアウト・スペーシングに役割分担して併用。
+
+**理由**
+- Mantine はボタン・モーダル・Dropzone・Stepper など、状態・アクセシビリティを伴うコンポーネントを網羅しており、スクラッチ実装コストを削減できる
+- Tailwind はページ全体のグリッド・最大幅・余白といったレイアウト制御を utility-first で書けるため、Mantine のコンポーネント単位のスタイルが届かない箇所を補完できる
+
+**トレードオフ**
+- 2つのスタイルシステムを使うため、スタイルを書く場所の判断基準（コンポーネントの見た目 → Mantine / レイアウト → Tailwind）を意識し続ける必要がある
+
+---
+
 ## Next.js
 
 フロントエンドにはNext.jsを採用。

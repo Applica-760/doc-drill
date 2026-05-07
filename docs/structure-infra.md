@@ -61,7 +61,7 @@ RDS と Secrets Manager を管理する。
 | リソース | 概要 |
 |---|---|
 | `random_password` | 32文字英数字のマスターパスワード生成（URL安全） |
-| `module "rds"` (terraform-aws-modules/rds) | PostgreSQL 16.6 / db.t3.micro / 20GB gp2 / Single-AZ |
+| `module "rds"` (terraform-aws-modules/rds) | RDS インスタンス（設計値は [architecture.md](architecture.md) 参照） |
 | `aws_secretsmanager_secret` + `aws_secretsmanager_secret_version` | `doc-drill/db-password`に `DATABASE_URL` 形式で格納 |
 
 ECS タスク定義では `secrets.valueFrom` でシークレット ARN を参照し、`DATABASE_URL` をコンテナに注入する。

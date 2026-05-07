@@ -248,56 +248,6 @@ Next.jsはバックエンドをHTTPで呼ぶだけのためAWSサービス呼び
 
 ---
 
-## Terraformステート管理
-
-### バックエンド構成
-
-ステートファイルをS3に保存し、DynamoDBで同時実行ロックを管理する。
-
-| リソース | 名前 | 備考 |
-|---|---|---|
-| S3バケット | `doc-drill-tfstate-{account_id}` | バージョニング有効 |
-| DynamoDBテーブル | `doc-drill-tfstate-lock` | パーティションキー: `LockID` (String) |
-
-**重要:** これらは Terraform 管理外で**手動作成**する（ステートを保存する場所自体はTerraformで管理できないため）。
-
-作成手順:
-```bash
-# S3バケット
-aws s3api create-bucket \
-  --bucket doc-drill-tfstate-{account_id} \
-  --region ap-northeast-1 \
-  --create-bucket-configuration LocationConstraint=ap-northeast-1
-
-aws s3api put-bucket-versioning \
-  --bucket doc-drill-tfstate-{account_id} \
-  --versioning-configuration Status=Enabled
-
-# DynamoDB テーブル
-aws dynamodb create-table \
-  --table-name doc-drill-tfstate-lock \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region ap-northeast-1
-```
-
-### backend.tf の記述例
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "doc-drill-tfstate-{account_id}"
-    key            = "doc-drill/terraform.tfstate"
-    region         = "ap-northeast-1"
-    dynamodb_table = "doc-drill-tfstate-lock"
-    encrypt        = true
-  }
-}
-```
-
----
-
 
 ## ローカル vs AWS 環境差分サマリ
 
